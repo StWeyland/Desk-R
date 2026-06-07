@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkedIn Klartext-Check — Desk Revolution</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:     #f2f3f5;
+    --black:  #1e1e1e;
+    --sage:   #8fa99b;
+    --slate:  #9aa0a6;
+    --forest: #41584c;
+    --white:  #ffffff;
+    --border: rgba(30,30,30,0.09);
+    --border-light: rgba(30,30,30,0.05);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+
+  body {
+    font-family: 'League Spartan', sans-serif;
+    background: var(--bg);
+    color: var(--black);
+    overflow-x: hidden;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--black);
+    padding: 1rem 6vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    line-height: 1;
+  }
+
+  .logo .l1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .logo .l1 em {
+    font-style: italic;
+    color: var(--sage);
+  }
+
+  .logo .rule {
+    width: 100%;
+    height: 1px;
+    background: rgba(143,169,155,0.35);
+    margin: 0.2rem 0;
+  }
+
+  .logo .l2 {
+    font-family: 'League Spartan', sans-serif;
+    font-weight: 800;
+    font-size: 0.38rem;
+    letter-spacing: 0.44em;
+    text-transform: uppercase;
+    color: rgba(143,169,155,0.65);
+  }
+
+  .topbar-claim {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.25);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--black);
+    padding: 6rem 6vw 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 55% 60% at 90% 10%, rgba(65,88,76,0.25), transparent 60%),
+      radial-gradient(ellipse 40% 50% at 5% 90%, rgba(143,169,155,0.1), transparent 60%);
+    pointer-events: none;
+  }
+
+  /* subtle grid */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 20%, transparent 80%);
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 820px;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sage);
+    border: 1px solid rgba(143,169,155,0.3);
+    padding: 0.35rem 0.9rem;
+    margin-bottom: 2.2rem;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--sage);
+    border-radius: 50%;
+  }
+
+  .hero-headline {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 6.5vw, 5rem);
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.8rem;
+    animation: fadeUp 0.5s ease 0.08s both;
+  }
+
+  .hero-headline em {
+    font-style: italic;
+    color: var(--sage);
+  }
+
+  .hero-sub {
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.5);
+    max-width: 52ch;
+    line-height: 1.7;
+    margin-bottom: 3rem;
+    animation: fadeUp 0.5s ease 0.16s both;
+  }
+
+  .hero-sub strong {
+    color: rgba(255,255,255,0.85);
+    font-weight: 600;
+  }
+
+  /* stat row */
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    flex-wrap: wrap;
+    padding-top: 2.5rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    animation: fadeUp 0.5s ease 0.22s both;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--slate);
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how {
+    padding: 5rem 6vw;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-eyebrow {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 0.4rem;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 600;
+    color: var(--black);
+    margin-bottom: 0.8rem;
+    letter-spacing: -0.015em;
+  }
+
+  .section-intro {
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--slate);
+    max-width: 56ch;
+    line-height: 1.7;
+    margin-bottom: 3rem;
+  }
+
+  .steps-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 4rem;
+  }
+
+  @media (max-width: 700px) {
+    .steps-row { grid-template-columns: 1fr; }
+  }
+
+  .step {
+    background: var(--white);
+    padding: 2rem;
+    position: relative;
+  }
+
+  .step-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    font-weight: 600;
+    color: rgba(143,169,155,0.2);
+    line-height: 1;
+    margin-bottom: 0.8rem;
+    letter-spacing: -0.04em;
+  }
+
+  .step h4 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.01em;
+  }
+
+  .step p {
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--slate);
+    line-height: 1.65;
+  }
+
+  /* ── PROMPTS ── */
+  .prompts-section {
+    background: var(--black);
+    padding: 5rem 6vw;
+  }
+
+  .prompts-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .prompts-section .section-eyebrow { color: var(--sage); }
+  .prompts-section .section-title { color: var(--white); }
+  .prompts-section .section-intro { color: rgba(255,255,255,0.4); }
+
+  .prompt-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .prompt-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .prompt-card:hover {
+    border-color: rgba(143,169,155,0.3);
+    background: rgba(255,255,255,0.06);
+  }
+
+  .prompt-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: rgba(143,169,155,0.3);
+    flex-shrink: 0;
+  }
+
+  .prompt-body {
+    padding: 1.8rem 2rem;
+  }
+
+  .prompt-topic {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 0.5rem;
+  }
+
+  .prompt-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 0.7rem;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .prompt-desc {
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.65;
+    margin-bottom: 1.2rem;
+  }
+
+  .prompt-box {
+    background: rgba(65,88,76,0.2);
+    border: 1px solid rgba(143,169,155,0.2);
+    border-left: 2px solid var(--sage);
+    padding: 1rem 1.2rem;
+    font-size: 0.83rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+
+  .prompt-box strong {
+    color: var(--white);
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: 1px solid rgba(143,169,155,0.3);
+    color: var(--sage);
+    font-family: 'League Spartan', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover {
+    background: var(--sage);
+    color: var(--black);
+    border-color: var(--sage);
+  }
+
+  .copy-btn.copied {
+    background: var(--forest);
+    border-color: var(--forest);
+    color: var(--white);
+  }
+
+  /* ── CALLOUT ── */
+  .callout-strip {
+    background: var(--forest);
+    padding: 3rem 6vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .callout-text h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .callout-text p {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.6);
+    max-width: 48ch;
+    line-height: 1.65;
+  }
+
+  /* ── LEAD MAGNETS ── */
+  .lead-section {
+    padding: 5rem 6vw 6rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .lead-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+  }
+
+  @media (max-width: 800px) {
+    .lead-grid { grid-template-columns: 1fr; }
+  }
+
+  .lead-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+
+  .lead-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.1);
+  }
+
+  .lead-card-top {
+    background: var(--black);
+    padding: 2.2rem 2rem 1.8rem;
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .lead-card-top::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .lead-card.c1 .lead-card-top::before {
+    background: radial-gradient(circle at 80% 20%, rgba(65,88,76,0.5), transparent 60%);
+  }
+  .lead-card.c2 .lead-card-top::before {
+    background: radial-gradient(circle at 20% 80%, rgba(143,169,155,0.35), transparent 60%);
+  }
+  .lead-card.c3 .lead-card-top::before {
+    background: radial-gradient(circle at 70% 30%, rgba(65,88,76,0.6), transparent 55%);
+  }
+
+  .lead-impuls-tag {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 0.6rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .lead-card-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 5rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.06);
+    line-height: 1;
+    position: absolute;
+    top: 0.5rem;
+    right: 1.2rem;
+    letter-spacing: -0.04em;
+    z-index: 1;
+  }
+
+  .lead-card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    position: relative;
+    z-index: 2;
+  }
+
+  .lead-card-title em {
+    font-style: italic;
+    color: var(--sage);
+  }
+
+  .lead-card-body {
+    padding: 1.8rem 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lead-card-desc {
+    font-size: 0.84rem;
+    font-weight: 400;
+    color: #5a5550;
+    line-height: 1.68;
+    margin-bottom: 1.4rem;
+    flex: 1;
+  }
+
+  .lead-tag-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .lead-tag {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.22rem 0.65rem;
+    border: 1px solid var(--border);
+    color: var(--slate);
+  }
+
+  .lead-badge {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.22rem 0.65rem;
+    background: rgba(65,88,76,0.1);
+    color: var(--forest);
+    border: 1px solid rgba(65,88,76,0.2);
+  }
+
+  .lead-cta {
+    display: block;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    background: var(--black);
+    border: none;
+    font-family: 'League Spartan', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--white);
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .lead-cta::after {
+    content: ' →';
+  }
+
+  .lead-cta:hover {
+    background: var(--forest);
+  }
+
+  .lead-cta.coming {
+    background: rgba(30,30,30,0.06);
+    color: var(--slate);
+    cursor: default;
+  }
+
+  .lead-cta.coming::after {
+    content: ' — bald verfügbar';
+  }
+
+  .lead-cta.coming:hover {
+    background: rgba(30,30,30,0.06);
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--black);
+    padding: 3rem 6vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .footer-claim {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.2);
+  }
+
+  .footer-author {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.show { opacity: 1; transform: translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .prompt-card { grid-template-columns: 48px 1fr; }
+    .prompt-num { font-size: 1.3rem; }
+    .hero-stats { gap: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="l1">Desk<em>R.</em></div>
+    <div class="rule"></div>
+    <div class="l2">Revolution</div>
+  </div>
+  <span class="topbar-claim">KI im Klartext</span>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">LinkedIn Klartext-Check</div>
+    <h1 class="hero-headline">
+      Dein Profil sagt, du bist Assistenz.<br>
+      Es sagt nicht, dass du <em>unverzichtbar</em> bist.
+    </h1>
+    <p class="hero-sub">
+      Die meisten LinkedIn-Profile von Assistenzen klingen wie eine Stellenbeschreibung aus 2018.<br>
+      <strong>Das hier ändert das.</strong> Fünf Prompts. Claude Chrome Extension. Kein Opt-in. Einfach machen.
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num">5</span>
+        <span class="stat-label">Prompts</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">0 €</span>
+        <span class="stat-label">Kosten</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">30 Min</span>
+        <span class="stat-label">Aufwand</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="how">
+  <div class="reveal">
+    <p class="section-eyebrow">So geht es</p>
+    <h2 class="section-title">Drei Schritte. Dann weißt du, woran du bist.</h2>
+    <p class="section-intro">Du brauchst kein Tool, keinen Account und keine Vorkenntnisse. Nur Claude — und die Bereitschaft, ehrliches Feedback anzunehmen.</p>
+
+    <div class="steps-row">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h4>Claude Chrome Extension herunterladen</h4>
+        <p>Die kostenlose Extension lässt Claude direkt auf LinkedIn mit deinem Profil arbeiten — ohne Copy-Paste.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h4>Dein LinkedIn-Profil öffnen</h4>
+        <p>Navigiere zu deinem eigenen Profil. Aktiviere die Extension. Claude sieht jetzt genau das, was andere sehen.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h4>Prompt eingeben — Klartext erhalten</h4>
+        <p>Kopiere einen der fünf Prompts unten. Claude analysiert, benennt, und schlägt konkrete Verbesserungen vor.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROMPTS -->
+<div class="prompts-section">
+  <div class="prompts-inner">
+    <div class="reveal">
+      <p class="section-eyebrow">Die 5 Prompts</p>
+      <h2 class="section-title" style="color: var(--white);">Kopieren. Einfügen. Fertig.</h2>
+      <p class="section-intro">Kein Schönreden. Kein generisches KI-Feedback. Jeder Prompt analysiert einen spezifischen Teil deines Profils — und liefert konkrete Verbesserungen.</p>
+    </div>
+
+    <div class="prompt-stack">
+
+      <!-- PROMPT 1 -->
+      <div class="prompt-card reveal">
+        <div class="prompt-num">1</div>
+        <div class="prompt-body">
+          <p class="prompt-topic">Headline & Positionierung</p>
+          <h3 class="prompt-title">Macht deine Headline klar, wer du wirklich bist?</h3>
+          <p class="prompt-desc">Die Headline ist das Erste, was jemand sieht. Die meisten Assistenzen schreiben dort ihren Jobtitel — und vergeben damit die einzige Chance, in drei Sekunden zu zeigen, warum sie anders sind.</p>
+          <div class="prompt-box">
+            Analysiere meine LinkedIn-Headline als erfahrene Karriereberaterin für Assistenzen. Bewerte: Ist sofort klar, was ich tue und was mich auszeichnet? Klingt es wie alle anderen in meiner Nische — oder nicht? Schreib mir <strong>drei alternative Headlines</strong>, die schärfer, klarer und unverwechselbarer sind. Keine generischen Vorlagen. Begründe jede Option kurz.
+          </div>
+          <button class="copy-btn" onclick="copyPrompt(this, 1)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Prompt kopieren
+          </button>
+        </div>
+      </div>
+
+      <!-- PROMPT 2 -->
+      <div class="prompt-card reveal">
+        <div class="prompt-num">2</div>
+        <div class="prompt-body">
+          <p class="prompt-topic">About-Section</p>
+          <h3 class="prompt-title">Liest sich deine About-Section wie eine Pressemitteilung?</h3>
+          <p class="prompt-desc">Der About-Bereich ist deine Bühne. Die meisten Assistenzen nutzen ihn, um aufzuzählen was sie können. Niemand liest das. Was Menschen liest: eine echte Geschichte, die zeigt warum du anders tickst.</p>
+          <div class="prompt-box">
+            Analysiere meine LinkedIn About-Section aus der Perspektive einer Führungskraft, die eine Assistenz sucht. Bewerte: Wird sofort klar, wem ich helfe und was mich unterscheidet? Klingt es wie von einer echten Person geschrieben — oder wie eine Jobbeschreibung? Gibt es einen klaren nächsten Schritt? Schreib mir eine <strong>überarbeitete Version</strong>: authentisch, klar, mit echtem CTA. Ton: direkt, menschlich, keine Floskeln.
+          </div>
+          <button class="copy-btn" onclick="copyPrompt(this, 2)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Prompt kopieren
+          </button>
+        </div>
+      </div>
+
+      <!-- PROMPT 3 -->
+      <div class="prompt-card reveal">
+        <div class="prompt-num">3</div>
+        <div class="prompt-body">
+          <p class="prompt-topic">Featured Section</p>
+          <h3 class="prompt-title">Nutzt du den wertvollsten Platz auf deinem Profil?</h3>
+          <p class="prompt-desc">Die Featured Section ist das einzige Element auf LinkedIn, das aktiv anklickbar ist — direkt unter deiner Headline. Die meisten Assistenzen lassen sie leer. Oder füllen sie mit dem Falschen.</p>
+          <div class="prompt-box">
+            Analysiere meine Featured Section auf LinkedIn. Ist sofort klar, wohin jeder Link führt und warum? Gibt es einen klaren Zweck hinter jedem Element — oder wirkt es zufällig zusammengestellt? Was fehlt? Schlag mir <strong>drei konkrete Elemente</strong> vor, die ich dort platzieren sollte, um meine Positionierung als KI-kompetente Assistenz zu stärken. Begründe jede Empfehlung.
+          </div>
+          <button class="copy-btn" onclick="copyPrompt(this, 3)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Prompt kopieren
+          </button>
+        </div>
+      </div>
+
+      <!-- PROMPT 4 -->
+      <div class="prompt-card reveal">
+        <div class="prompt-num">4</div>
+        <div class="prompt-body">
+          <p class="prompt-topic">Banner & erster Eindruck</p>
+          <h3 class="prompt-title">Was sieht jemand in den ersten drei Sekunden?</h3>
+          <p class="prompt-desc">Profilbild, Banner, Headline — das ist alles, was jemand sieht, bevor sie entscheiden, ob sie weiterlesen. Dieser erste Eindruck entscheidet über Klick oder Scrollen.</p>
+          <div class="prompt-box">
+            Analysiere meinen LinkedIn-Banner und den Gesamteindruck meines Profils beim ersten Aufruf. Was sieht jemand in den ersten drei Sekunden — und was löst das aus? Ist die Hauptbotschaft klar? Wirkt das Profil konsistent oder zersplittert? Gib mir <strong>konkrete Verbesserungsvorschläge</strong> für Banner-Botschaft, Design-Konsistenz und ersten Eindruck. Sei direkt — kein Schönreden.
+          </div>
+          <button class="copy-btn" onclick="copyPrompt(this, 4)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Prompt kopieren
+          </button>
+        </div>
+      </div>
+
+      <!-- PROMPT 5 — AUDIT SCORE -->
+      <div class="prompt-card reveal">
+        <div class="prompt-num">5</div>
+        <div class="prompt-body">
+          <p class="prompt-topic">Gesamt-Audit</p>
+          <h3 class="prompt-title">Der ehrliche Score — wo stehst du wirklich?</h3>
+          <p class="prompt-desc">Dieser Prompt fasst alles zusammen. Du bekommst eine ehrliche Bewertung in drei Dimensionen, deine Top-3-Stärken und eine klare Prioritätenliste — was zuerst, was danach.</p>
+          <div class="prompt-box">
+            Führe einen vollständigen LinkedIn-Profil-Audit für eine Assistenz durch und bewerte nach drei Dimensionen (je 1–10):<br><br>
+            <strong>1. KLARHEIT</strong> — Ist sofort klar, wer ich bin, wem ich helfe, was mich auszeichnet?<br>
+            <strong>2. WIRKUNG</strong> — Wirke ich wie jemand, dem Führungskräfte vertrauen? Oder wie eine von vielen?<br>
+            <strong>3. ZUKUNFTSFÄHIGKEIT</strong> — Zeigt das Profil, dass ich mit KI und modernen Tools arbeite — oder wirkt es wie 2019?<br><br>
+            Gib mir danach: Top 3 Stärken. Top 3 Quick-Fixes (sofort umsetzbar). Eine Prioritätsliste: was zuerst, was danach. Gnadenloses Feedback — kein Coaching-Sprech.
+          </div>
+          <button class="copy-btn" onclick="copyPrompt(this, 5)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Prompt kopieren
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- CALLOUT STRIP -->
+<div class="callout-strip">
+  <div class="callout-text">
+    <h3>Das Profil ist der Anfang. Nicht das Ziel.</h3>
+    <p>Ein starkes LinkedIn-Profil öffnet Türen. Was du dahinter zeigst — dein echter Umgang mit KI im Alltag — macht dich unersetzlich. Dafür gibt es die KI-Impulse.</p>
+  </div>
+</div>
+
+<!-- LEAD MAGNETS -->
+<div class="lead-section">
+  <div class="reveal">
+    <p class="section-eyebrow">Nächster Schritt</p>
+    <h2 class="section-title">KI im Alltag — kostenlose Anleitungen.</h2>
+    <p class="section-intro">Das Profil ist optimiert. Jetzt kommt die Praxis. Drei Leitfäden, die zeigen, wie KI deinen echten Arbeitsalltag verändert — konkret, sofort einsetzbar.</p>
+  </div>
+
+  <div class="lead-grid reveal">
+
+    <!-- IMPULS 2 -->
+    <div class="lead-card c1">
+      <div class="lead-card-top">
+        <span class="lead-card-num">02</span>
+        <div class="lead-impuls-tag">KI im Klartext · Impuls #2</div>
+        <h3 class="lead-card-title">Meeting-Protokolle: Von <em>Chaos</em> zu Klartext in Minuten</h3>
+      </div>
+      <div class="lead-card-body">
+        <p class="lead-card-desc">Stichpunkte rein — strukturiertes Protokoll mit To-dos, Verantwortlichen und Deadlines raus. Der Prompt, der aus deinen Meeting-Notizen in unter zwei Minuten ein professionelles Dokument macht.</p>
+        <div class="lead-tag-row">
+          <span class="lead-tag">Office-Tools</span>
+          <span class="lead-badge">Kostenlos</span>
+        </div>
+        <a href="#" class="lead-cta coming">Leitfaden herunterladen</a>
+      </div>
+    </div>
+
+    <!-- IMPULS 3 -->
+    <div class="lead-card c2">
+      <div class="lead-card-top">
+        <span class="lead-card-num">03</span>
+        <div class="lead-impuls-tag">KI im Klartext · Impuls #3</div>
+        <h3 class="lead-card-title">Präsentationen: <em>Rohentwurf</em> per Prompt — Feinschliff durch dich</h3>
+      </div>
+      <div class="lead-card-body">
+        <p class="lead-card-desc">KI generiert Gliederung und Teasertexte. Du bringst Branding und Empfängerlogik. 80/20 — smarter als von Null starten. Der Prompt, der dir Stunden spart.</p>
+        <div class="lead-tag-row">
+          <span class="lead-tag">Office-Tools</span>
+          <span class="lead-badge">Kostenlos</span>
+        </div>
+        <a href="#" class="lead-cta coming">Leitfaden herunterladen</a>
+      </div>
+    </div>
+
+    <!-- IMPULS 4 -->
+    <div class="lead-card c3">
+      <div class="lead-card-top">
+        <span class="lead-card-num">04</span>
+        <div class="lead-impuls-tag">KI im Klartext · Impuls #4</div>
+        <h3 class="lead-card-title">Excel ohne <em>Formelfrustration</em> — KI erklärt und baut</h3>
+      </div>
+      <div class="lead-card-body">
+        <p class="lead-card-desc">Beschreib auf Deutsch, was du berechnen willst. Die Claude Extension in Excel liefert die Formel — mit Erklärung, warum sie funktioniert. Nie wieder googeln.</p>
+        <div class="lead-tag-row">
+          <span class="lead-tag">Office-Tools</span>
+          <span class="lead-badge">Kostenlos</span>
+        </div>
+        <a href="#" class="lead-cta coming">Leitfaden herunterladen</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="logo">
+    <div class="l1">Desk<em>R.</em></div>
+    <div class="rule"></div>
+    <div class="l2">Revolution</div>
+  </div>
+  <span class="footer-author">Stefanie Weyland</span>
+  <span class="footer-claim">Werde die Assistenz der Zukunft — nutze KI.</span>
+</div>
+
+<script>
+  // Scroll reveal
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('show');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // Prompts
+  const prompts = {
+    1: `Analysiere meine LinkedIn-Headline als erfahrene Karriereberaterin für Assistenzen. Bewerte: Ist sofort klar, was ich tue und was mich auszeichnet? Klingt es wie alle anderen in meiner Nische — oder nicht? Schreib mir drei alternative Headlines, die schärfer, klarer und unverwechselbarer sind. Keine generischen Vorlagen. Begründe jede Option kurz.`,
+    2: `Analysiere meine LinkedIn About-Section aus der Perspektive einer Führungskraft, die eine Assistenz sucht. Bewerte: Wird sofort klar, wem ich helfe und was mich unterscheidet? Klingt es wie von einer echten Person geschrieben — oder wie eine Jobbeschreibung? Gibt es einen klaren nächsten Schritt? Schreib mir eine überarbeitete Version: authentisch, klar, mit echtem CTA. Ton: direkt, menschlich, keine Floskeln.`,
+    3: `Analysiere meine Featured Section auf LinkedIn. Ist sofort klar, wohin jeder Link führt und warum? Gibt es einen klaren Zweck hinter jedem Element — oder wirkt es zufällig zusammengestellt? Was fehlt? Schlag mir drei konkrete Elemente vor, die ich dort platzieren sollte, um meine Positionierung als KI-kompetente Assistenz zu stärken. Begründe jede Empfehlung.`,
+    4: `Analysiere meinen LinkedIn-Banner und den Gesamteindruck meines Profils beim ersten Aufruf. Was sieht jemand in den ersten drei Sekunden — und was löst das aus? Ist die Hauptbotschaft klar? Wirkt das Profil konsistent oder zersplittert? Gib mir konkrete Verbesserungsvorschläge für Banner-Botschaft, Design-Konsistenz und ersten Eindruck. Sei direkt — kein Schönreden.`,
+    5: `Führe einen vollständigen LinkedIn-Profil-Audit für eine Assistenz durch und bewerte nach drei Dimensionen (je 1–10):
+
+1. KLARHEIT — Ist sofort klar, wer ich bin, wem ich helfe, was mich auszeichnet?
+2. WIRKUNG — Wirke ich wie jemand, dem Führungskräfte vertrauen? Oder wie eine von vielen?
+3. ZUKUNFTSFÄHIGKEIT — Zeigt das Profil, dass ich mit KI und modernen Tools arbeite — oder wirkt es wie 2019?
+
+Gib mir danach: Top 3 Stärken. Top 3 Quick-Fixes (sofort umsetzbar). Eine Prioritätsliste: was zuerst, was danach. Gnadenloses Feedback — kein Coaching-Sprech.`
+  };
+
+  function copyPrompt(btn, num) {
+    navigator.clipboard.writeText(prompts[num]).then(() => {
+      const orig = btn.innerHTML;
+      btn.classList.add('copied');
+      btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Kopiert`;
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = orig;
+      }, 2200);
+    });
+  }
+</script>
+
+</body>
+</html>

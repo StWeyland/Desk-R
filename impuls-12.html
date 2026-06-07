@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wenn alles dringend ist — KI im Klartext #12 · Desk Revolution</title>
+<meta name="description" content="Der kostenlose Leitfaden für Assistenzen, die aufgehört haben, nach Bauchgefühl zu priorisieren.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:     #f2f3f5;
+    --black:  #1e1e1e;
+    --sage:   #8fa99b;
+    --slate:  #9aa0a6;
+    --forest: #41584c;
+    --white:  #ffffff;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: 'League Spartan', sans-serif; background: var(--black); color: var(--white); }
+
+  .topbar {
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 0.9rem 5vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
+  .logo .l1 { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 600; color: var(--white); letter-spacing: -0.02em; line-height: 1; }
+  .logo .l1 em { font-style: italic; color: var(--sage); }
+  .logo .rule { width: 100%; height: 1px; background: rgba(143,169,155,0.35); margin: 0.2rem 0; }
+  .logo .l2 { font-family: 'League Spartan', sans-serif; font-size: 0.36rem; font-weight: 800; letter-spacing: 0.44em; text-transform: uppercase; color: rgba(143,169,155,0.6); }
+  .topbar-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.2); display: flex; align-items: center; gap: 0.5rem; }
+  .topbar-label::before { content: '◉'; color: var(--sage); font-size: 0.5rem; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .lp-body { max-width: 680px; margin: 0 auto; padding: 5rem 5vw 6rem; }
+
+  .lp-tag { display: inline-block; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sage); border: 1px solid rgba(143,169,155,0.4); padding: 0.3rem 0.85rem; margin-bottom: 2rem; animation: fadeUp 0.5s ease both; }
+
+  .lp-headline { font-family: 'Playfair Display', serif; font-size: clamp(2.4rem, 7vw, 4.2rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; color: var(--white); margin-bottom: 1.4rem; animation: fadeUp 0.5s ease 0.08s both; }
+  .lp-headline em { font-style: italic; color: var(--sage); }
+
+  .lp-sub { font-size: 1rem; line-height: 1.7; color: rgba(255,255,255,0.55); max-width: 46ch; margin-bottom: 2.5rem; animation: fadeUp 0.5s ease 0.14s both; font-weight: 400; }
+
+  .lp-bullets { list-style: none; margin-bottom: 3rem; display: flex; flex-direction: column; gap: 0.85rem; animation: fadeUp 0.5s ease 0.18s both; }
+  .lp-bullets li { display: flex; gap: 0.9rem; align-items: flex-start; font-size: 0.9rem; line-height: 1.65; color: rgba(255,255,255,0.72); font-weight: 400; }
+  .lp-bullets li::before { content: '✓'; color: var(--sage); font-weight: 700; flex-shrink: 0; margin-top: 0.1em; font-size: 0.95rem; }
+
+  .lp-form { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 3px; padding: 2rem; animation: fadeUp 0.5s ease 0.22s both; }
+  .lp-form-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 600; color: var(--white); margin-bottom: 0.3rem; letter-spacing: -0.01em; }
+  .lp-form-sub { font-size: 0.76rem; color: rgba(255,255,255,0.35); margin-bottom: 1.5rem; font-weight: 400; }
+
+  .brevo-embed input[type="text"],
+  .brevo-embed input[type="email"] {
+    background: rgba(255,255,255,0.07) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 3px !important;
+    padding: 0.9rem 1.1rem !important;
+    font-family: 'League Spartan', sans-serif !important;
+    font-size: 0.88rem !important;
+    color: var(--white) !important;
+    width: 100% !important;
+    margin-bottom: 0.7rem !important;
+    box-sizing: border-box !important;
+  }
+  .brevo-embed button[type="submit"],
+  .brevo-embed input[type="submit"] {
+    width: 100% !important;
+    padding: 1rem !important;
+    background: var(--forest) !important;
+    border: none !important;
+    border-radius: 3px !important;
+    font-family: 'League Spartan', sans-serif !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    color: var(--white) !important;
+    cursor: pointer !important;
+    margin-top: 0.3rem !important;
+  }
+
+  .lp-privacy { font-size: 0.65rem; color: rgba(255,255,255,0.22); text-align: center; margin-top: 1rem; line-height: 1.6; font-weight: 400; }
+
+  .lp-author { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 1.2rem; animation: fadeUp 0.5s ease 0.28s both; }
+  .lp-signet { width: 48px; height: 48px; border-radius: 50%; background: var(--forest); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; color: var(--white); letter-spacing: -0.04em; line-height: 1; }
+  .lp-signet em { font-style: italic; color: var(--sage); }
+  .lp-author-text { font-size: 0.78rem; line-height: 1.55; color: rgba(255,255,255,0.45); font-weight: 400; }
+  .lp-author-text strong { color: rgba(255,255,255,0.82); display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.1rem; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="l1">Desk<em>R.</em></div>
+    <div class="rule"></div>
+    <div class="l2">Revolution</div>
+  </div>
+  <span class="topbar-label">KI im Klartext · Impuls #12</span>
+</div>
+
+<div class="lp-body">
+
+  <span class="lp-tag">KI im Klartext · Impuls #12</span>
+
+  <h1 class="lp-headline">Wenn alles <em>dringend</em> ist —<br>und du trotzdem klar entscheidest.</h1>
+
+  <p class="lp-sub">Der kostenlose Leitfaden für Assistenzen, die aufgehört haben, nach Bauchgefühl zu priorisieren.</p>
+
+  <ul class="lp-bullets">
+    <li>Der genaue Prompt, den ich nutze, wenn drei Anfragen gleichzeitig reinkommen — mit 3 Varianten für verschiedene Situationen</li>
+    <li>Schritt-für-Schritt: Wie du KI in unter 2 Minuten in deine Morgenroutine integrierst</li>
+    <li>Warum KI besser priorisiert als du — und was das über Entscheidungen ohne Emotion bedeutet</li>
+    <li>Direkt einsetzbar mit Claude (kostenlose Version reicht)</li>
+  </ul>
+
+  <div class="lp-form">
+    <p class="lp-form-title">Jetzt kostenlos herunterladen</p>
+    <p class="lp-form-sub">Kein Spam. Nur dieser eine Leitfaden — direkt in dein Postfach.</p>
+
+    <!-- ═══════════════════════════════════════════════════════
+         BREVO FORMULAR — diesen Block ersetzen:
+         Brevo → Kontakte → Formulare → "Priorisierung #12" → Einbettungscode kopieren
+         ═══════════════════════════════════════════════════════ -->
+    <div class="brevo-embed" id="brevo-form-12">
+      <!-- BREVO CODE HIER EINFÜGEN -->
+    </div>
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+    <p class="lp-privacy">Mit dem Download stimmst du zu, gelegentlich Updates von Desk Revolution zu erhalten. Abmeldung jederzeit möglich.</p>
+  </div>
+
+  <div class="lp-author">
+    <div class="lp-signet">D<em>R</em></div>
+    <div class="lp-author-text">
+      <strong>Stefanie Weyland · Desk Revolution</strong>
+      Assistenz bei Brookfield Properties Germany · Berlin<br>
+      „Werde die Assistenz der Zukunft — nutze KI."
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
