@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desk Revolution — Werde die Assistentin der Zukunft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+
+[data-theme="dark"] {
+  --bg:       #1e1e1e;
+  --bg2:      #252525;
+  --bg3:      #41584c;
+  --panel:    #2a2a2a;
+  --accent:   #8fa99b;
+  --forest:   #41584c;
+  --text:     #f2f3f5;
+  --muted:    #9aa0a6;
+  --border:   rgba(143,169,155,0.15);
+  --btn-fg:   #1e1e1e;
+  --ghost:    rgba(143,169,155,0.04);
+  --input-bg: rgba(242,243,245,0.05);
+  --modal-bg: #232323;
+  --nav-bg:   rgba(30,30,30,0.94);
+}
+
+[data-theme="light"] {
+  --bg:       #f2f3f5;
+  --bg2:      #eaeae6;
+  --bg3:      #dde8e3;
+  --panel:    #e2e2de;
+  --accent:   #41584c;
+  --forest:   #41584c;
+  --text:     #1e1e1e;
+  --muted:    #5c6e66;
+  --border:   rgba(65,88,76,0.16);
+  --btn-fg:   #f2f3f5;
+  --ghost:    rgba(65,88,76,0.05);
+  --input-bg: rgba(30,30,30,0.05);
+  --modal-bg: #eaeae6;
+  --nav-bg:   rgba(242,243,245,0.94);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'League Spartan', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  transition: background 0.4s, color 0.4s;
+}
+
+/* ── REVEAL ── */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity: 1; transform: none; }
+.d1 { transition-delay: 0.1s; }
+.d2 { transition-delay: 0.2s; }
+.d3 { transition-delay: 0.3s; }
+.d4 { transition-delay: 0.4s; }
+
+/* ── DIVIDER ── */
+.hr { width: 100%; height: 1px; background: var(--border); transition: background 0.4s; }
+
+/* ── TOGGLE ── */
+.toggle {
+  position: fixed; top: 16px; right: 20px; z-index: 600;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--panel); border: 1px solid var(--border);
+  padding: 7px 12px; cursor: pointer;
+  transition: background 0.4s, border 0.4s;
+}
+.toggle:hover { border-color: var(--accent); }
+.t-icon { font-size: 12px; }
+.t-track {
+  width: 32px; height: 17px; background: var(--border);
+  border-radius: 9px; position: relative; transition: background 0.3s;
+}
+[data-theme="dark"] .t-track { background: var(--accent); }
+.t-thumb {
+  position: absolute; top: 2.5px; left: 2.5px;
+  width: 12px; height: 12px; background: var(--bg);
+  border-radius: 50%; transition: transform 0.3s, background 0.4s;
+}
+[data-theme="dark"] .t-thumb { transform: translateX(15px); }
+.t-lbl {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted); transition: color 0.4s;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 500;
+  background: var(--nav-bg); backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 6vw; height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background 0.4s, border 0.4s;
+}
+.logo { display: flex; flex-direction: column; align-items: flex-start; gap: 0; text-decoration: none; }
+.logo-l1 {
+  font-family: 'Playfair Display', serif; font-size: 1.3rem;
+  font-weight: 600; color: var(--text); line-height: 1;
+  letter-spacing: -0.02em; transition: color 0.4s;
+}
+.logo-l1 em { font-style: italic; color: var(--accent); transition: color 0.4s; }
+.logo-rule { width: 100%; height: 1px; background: var(--accent); opacity: 0.3; margin: 2px 0; }
+.logo-l2 {
+  font-family: 'League Spartan', sans-serif; font-size: 0.36rem;
+  font-weight: 800; letter-spacing: 0.44em; text-transform: uppercase;
+  color: var(--accent); transition: color 0.4s;
+}
+.nav-claim {
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted);
+  transition: color 0.4s; padding-right: 90px;
+}
+
+/* ── HERO ── */
+#hero {
+  min-height: 100vh; display: flex; align-items: center;
+  padding: 80px 6vw; position: relative;
+  border-left: 4px solid var(--accent); overflow: hidden;
+  transition: border-color 0.4s;
+}
+.hero-ghost {
+  position: absolute; right: -1vw; top: 50%; transform: translateY(-50%);
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(120px, 20vw, 300px); font-weight: 600;
+  color: var(--ghost); line-height: 1; pointer-events: none;
+  user-select: none; letter-spacing: -5px; transition: color 0.4s;
+}
+.hero-inner { position: relative; z-index: 2; max-width: 760px; }
+.hero-eyebrow {
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.26em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 22px;
+  transition: color 0.4s;
+}
+.hero-hl {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(38px, 6.5vw, 84px); font-weight: 600;
+  line-height: 1.04; letter-spacing: -0.02em;
+  color: var(--text); margin-bottom: 28px; transition: color 0.4s;
+}
+.hero-sub {
+  font-family: 'Playfair Display', serif; font-style: italic;
+  font-size: clamp(15px, 1.7vw, 20px); color: var(--muted);
+  max-width: 520px; line-height: 1.65; margin-bottom: 44px;
+  transition: color 0.4s;
+}
+.hero-sub strong { font-style: normal; font-weight: 600; color: var(--accent); transition: color 0.4s; }
+
+.btn {
+  display: inline-block; background: var(--accent); color: var(--btn-fg);
+  font-family: 'League Spartan', sans-serif; font-weight: 700;
+  font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase;
+  text-decoration: none; padding: 14px 36px;
+  border: none; cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+}
+.btn:hover { background: var(--text); color: var(--bg); transform: translateY(-1px); }
+
+/* ── TRUTH ── */
+#truth { padding: 80px 6vw; background: var(--bg); transition: background 0.4s; }
+.truth-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px;
+  background: var(--border); border: 1px solid var(--border);
+  max-width: 980px; transition: background 0.4s, border 0.4s;
+}
+.truth-item {
+  background: var(--bg); padding: 36px 32px;
+  display: flex; align-items: flex-start; gap: 16px;
+  transition: background 0.4s;
+}
+.truth-item:hover { background: var(--panel); }
+.truth-num {
+  font-family: 'Playfair Display', serif; font-size: 2rem;
+  font-weight: 600; color: var(--accent); opacity: 0.4;
+  line-height: 1; flex-shrink: 0; transition: color 0.4s, opacity 0.4s;
+}
+.truth-text { font-size: 0.95rem; font-weight: 500; color: var(--text); line-height: 1.6; transition: color 0.4s; }
+.truth-text em { font-style: normal; font-weight: 400; color: var(--muted); display: block; margin-top: 6px; font-size: 0.85rem; transition: color 0.4s; }
+
+/* ── ABOUT ── */
+#about {
+  padding: 90px 6vw; background: var(--bg3); transition: background 0.4s;
+  position: relative; overflow: hidden;
+}
+#about::before {
+  content: 'DR.';
+  position: absolute; right: -20px; bottom: -20px;
+  font-family: 'Playfair Display', serif; font-size: 18vw; font-weight: 600;
+  color: rgba(143,169,155,0.06); line-height: 1;
+  pointer-events: none; user-select: none; letter-spacing: -5px;
+}
+.about-grid {
+  display: grid; grid-template-columns: 1fr 1.4fr; gap: 80px;
+  align-items: start; max-width: 1000px;
+}
+.about-left { position: relative; z-index: 2; }
+.about-tag {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.26em;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 18px; display: block; transition: color 0.4s;
+}
+.about-hl {
+  font-family: 'Playfair Display', serif; font-size: clamp(28px, 4vw, 48px);
+  font-weight: 600; line-height: 1.15; color: var(--text);
+  margin-bottom: 0; transition: color 0.4s;
+}
+.about-hl em { font-style: italic; color: var(--accent); transition: color 0.4s; }
+.about-right { position: relative; z-index: 2; }
+.about-body {
+  font-size: 0.95rem; font-weight: 400; color: var(--muted);
+  line-height: 1.85; margin-bottom: 18px; transition: color 0.4s;
+}
+.about-body strong { color: var(--text); font-weight: 600; transition: color 0.4s; }
+.about-quote {
+  border-left: 3px solid var(--accent); padding-left: 18px; margin: 24px 0;
+  font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.05rem;
+  color: var(--text); line-height: 1.6; transition: border-color 0.4s, color 0.4s;
+}
+.about-name {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.26em;
+  text-transform: uppercase; color: var(--accent); margin-top: 28px;
+  display: block; transition: color 0.4s;
+}
+.about-role {
+  font-size: 0.82rem; font-weight: 400; color: var(--muted);
+  margin-top: 6px; transition: color 0.4s;
+}
+
+/* ── PAIN ── */
+#pain { padding: 90px 6vw; background: var(--bg); transition: background 0.4s; }
+.pain-intro {
+  font-family: 'Playfair Display', serif; font-size: clamp(22px, 3vw, 38px);
+  font-weight: 400; color: var(--text); line-height: 1.25;
+  max-width: 680px; margin-bottom: 52px; transition: color 0.4s;
+}
+.pain-intro em { font-style: italic; color: var(--accent); transition: color 0.4s; }
+.pain-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+  background: var(--border); border: 1px solid var(--border);
+  transition: background 0.4s, border 0.4s;
+}
+.pain-card {
+  background: var(--bg); padding: 36px 28px;
+  border-top: 3px solid var(--accent); transition: background 0.4s, border-color 0.4s;
+}
+.pain-card:hover { background: var(--panel); }
+.pain-icon { color: var(--accent); margin-bottom: 18px; display: block; opacity: 0.8; transition: color 0.4s; }
+.pain-title {
+  font-family: 'League Spartan', sans-serif; font-weight: 700;
+  font-size: 1rem; color: var(--text); line-height: 1.35;
+  margin-bottom: 10px; transition: color 0.4s;
+}
+.pain-body { font-size: 0.85rem; font-weight: 400; color: var(--muted); line-height: 1.7; transition: color 0.4s; }
+
+/* ── SESSIONS ── */
+#sessions {
+  padding: 90px 6vw; background: var(--bg2); transition: background 0.4s;
+  position: relative; overflow: hidden;
+}
+.sessions-header { max-width: 680px; margin-bottom: 56px; }
+.sessions-tag {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.26em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 16px;
+  display: block; transition: color 0.4s;
+}
+.sessions-hl {
+  font-family: 'Playfair Display', serif; font-size: clamp(26px, 4vw, 46px);
+  font-weight: 600; line-height: 1.15; color: var(--text);
+  margin-bottom: 16px; transition: color 0.4s;
+}
+.sessions-sub {
+  font-size: 0.92rem; font-weight: 400; color: var(--muted);
+  line-height: 1.8; transition: color 0.4s;
+}
+
+.sessions-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1px; background: var(--border); border: 1px solid var(--border);
+  margin-bottom: 48px; transition: background 0.4s, border 0.4s;
+}
+.session-card {
+  background: var(--bg2); padding: 32px 28px;
+  transition: background 0.4s;
+}
+.session-card:hover { background: var(--panel); }
+.session-num {
+  font-family: 'Playfair Display', serif; font-size: 2.2rem;
+  font-weight: 600; color: var(--accent); opacity: 0.25;
+  line-height: 1; margin-bottom: 14px; transition: color 0.4s;
+}
+.session-title {
+  font-family: 'League Spartan', sans-serif; font-weight: 700;
+  font-size: 0.98rem; color: var(--text); line-height: 1.35;
+  margin-bottom: 8px; transition: color 0.4s;
+}
+.session-body { font-size: 0.83rem; font-weight: 400; color: var(--muted); line-height: 1.7; transition: color 0.4s; }
+
+.coming-soon-box {
+  background: var(--panel); border: 1px solid var(--border);
+  border-left: 4px solid var(--accent); padding: 28px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 20px; transition: background 0.4s, border 0.4s;
+}
+.cs-left { }
+.cs-badge {
+  display: inline-block; font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  background: var(--accent); color: var(--btn-fg);
+  padding: 4px 12px; margin-bottom: 10px; transition: background 0.4s, color 0.4s;
+}
+.cs-text {
+  font-family: 'Playfair Display', serif; font-size: 1.15rem;
+  font-weight: 600; color: var(--text); line-height: 1.35; transition: color 0.4s;
+}
+.cs-sub {
+  font-size: 0.82rem; font-weight: 400; color: var(--muted);
+  margin-top: 6px; transition: color 0.4s;
+}
+
+/* ── WAITLIST ── */
+#waitlist { padding: 90px 6vw; background: var(--bg3); text-align: center; transition: background 0.4s; }
+.waitlist-hl {
+  font-family: 'Playfair Display', serif; font-size: clamp(28px, 4.5vw, 54px);
+  font-weight: 600; color: var(--text); margin-bottom: 14px; transition: color 0.4s;
+}
+.waitlist-sub { font-size: 0.92rem; font-weight: 400; color: var(--muted); margin-bottom: 44px; transition: color 0.4s; }
+.form-row {
+  display: flex; gap: 8px; max-width: 560px;
+  margin: 0 auto 10px; flex-wrap: wrap;
+}
+.form-row input {
+  flex: 1; min-width: 180px; background: var(--input-bg);
+  border: 1px solid var(--border); color: var(--text);
+  font-family: 'League Spartan', sans-serif; font-size: 0.84rem;
+  padding: 13px 18px; outline: none;
+  transition: border-color 0.2s, background 0.4s, color 0.4s;
+}
+.form-row input::placeholder { color: var(--muted); }
+.form-row input:focus { border-color: var(--accent); }
+.form-note { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.06em; margin-top: 8px; transition: color 0.4s; }
+.success-msg {
+  display: none; margin-top: 24px;
+  font-family: 'Playfair Display', serif; font-style: italic;
+  font-size: 1.2rem; color: var(--accent); transition: color 0.4s;
+}
+
+/* ── FOOTER ── */
+footer {
+  padding: 28px 6vw; background: var(--bg);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 14px; transition: background 0.4s, border 0.4s;
+}
+.footer-left {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.footer-brand { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); transition: color 0.4s; }
+.footer-claim { font-family: 'Playfair Display', serif; font-style: italic; font-size: 0.78rem; color: var(--accent); transition: color 0.4s; }
+.footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+.footer-links a {
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--muted);
+  text-decoration: none; cursor: pointer; transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--accent); }
+
+/* ── MODALS ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.72); z-index: 900;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--modal-bg); border: 1px solid var(--border);
+  max-width: 620px; width: 100%; max-height: 82vh; overflow-y: auto;
+  padding: 48px; position: relative; transition: background 0.4s, border 0.4s;
+}
+.modal-box h2 {
+  font-family: 'Playfair Display', serif; font-size: 1.6rem;
+  font-weight: 600; color: var(--text); margin-bottom: 22px; transition: color 0.4s;
+}
+.modal-box h3 {
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--accent); margin: 22px 0 8px; transition: color 0.4s;
+}
+.modal-box p, .modal-box li { font-size: 0.86rem; font-weight: 400; color: var(--muted); line-height: 1.8; margin-bottom: 6px; transition: color 0.4s; }
+.modal-box ul { padding-left: 18px; }
+.modal-close { position: absolute; top: 16px; right: 20px; background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; transition: color 0.2s; }
+.modal-close:hover { color: var(--text); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 800px) {
+  .about-grid { grid-template-columns: 1fr; gap: 40px; }
+  .truth-grid { grid-template-columns: 1fr; }
+  .pain-grid { grid-template-columns: 1fr; background: none; border: none; gap: 1px; }
+  .pain-card { border: 1px solid var(--border); border-top: 3px solid var(--accent); }
+}
+@media (max-width: 650px) {
+  .form-row { flex-direction: column; }
+  footer { flex-direction: column; align-items: flex-start; }
+  .modal-box { padding: 36px 22px; }
+  .toggle { top: 10px; right: 12px; padding: 6px 10px; }
+  nav { padding: 0 4vw; }
+  .nav-claim { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOGGLE -->
+<button class="toggle" onclick="toggleTheme()" aria-label="Hell/Dunkel wechseln">
+  <span class="t-icon" id="tIcon">🌙</span>
+  <div class="t-track"><div class="t-thumb"></div></div>
+  <span class="t-lbl" id="tLbl">Dunkel</span>
+</button>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo" aria-label="Desk Revolution">
+    <div class="logo-l1">Desk<em>R.</em></div>
+    <div class="logo-rule"></div>
+    <div class="logo-l2">Revolution</div>
+  </a>
+  <span class="nav-claim">Werde die Assistentin der Zukunft</span>
+</nav>
+
+<!-- ════════════════════════════════════
+     HERO
+════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-ghost" aria-hidden="true">ZUKUNFT</div>
+  <div class="hero-inner">
+    <p class="hero-eyebrow reveal">Desk Revolution · KI im Klartext</p>
+    <h1 class="hero-hl reveal d1">Werde die Assistentin<br>der Zukunft.</h1>
+    <p class="hero-sub reveal d2">
+      Wer jetzt lernt, KI zu nutzen, <strong>wird unersetzlich.</strong><br>
+      Wer wartet, wird ersetzt.
+    </p>
+    <a href="#waitlist" class="btn reveal d3">Jetzt auf die Warteliste</a>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+<!-- ════════════════════════════════════
+     TRUTH — sofortige Wiedererkennung
+════════════════════════════════════ -->
+<section id="truth">
+  <div class="truth-grid">
+    <div class="truth-item reveal">
+      <span class="truth-num">01</span>
+      <div class="truth-text">
+        Drei Chefs. Zehn Nachrichten. Alle dringend. Gleichzeitig.
+        <em>Und du weißt nicht, womit du anfangen sollst.</em>
+      </div>
+    </div>
+    <div class="truth-item reveal d1">
+      <span class="truth-num">02</span>
+      <div class="truth-text">
+        Du priorisierst nach Bauchgefühl. Oder nach dem, wer am lautesten fragt.
+        <em>Am Ende des Tages weißt du nicht, ob du die richtigen Dinge erledigt hast.</em>
+      </div>
+    </div>
+    <div class="truth-item reveal d2">
+      <span class="truth-num">03</span>
+      <div class="truth-text">
+        Meetingprotokolle. E-Mails. Präsentationen. Alles nochmal von vorn.
+        <em>Aufgaben die sich jede Woche wiederholen und Stunden fressen.</em>
+      </div>
+    </div>
+    <div class="truth-item reveal d3">
+      <span class="truth-num">04</span>
+      <div class="truth-text">
+        KI soll helfen — du weißt nur nicht wo anfangen.
+        <em>Alle reden darüber. Niemand zeigt es dir. Nicht für deinen Alltag.</em>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+<!-- ════════════════════════════════════
+     ABOUT — Was ist Desk Revolution
+════════════════════════════════════ -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-left reveal">
+      <span class="about-tag">Was ist Desk Revolution</span>
+      <h2 class="about-hl">
+        Nicht für die,<br>die jammern.<br>Für die, die <em>wollen.</em>
+      </h2>
+    </div>
+    <div class="about-right reveal d1">
+      <p class="about-body">
+        Die Idee entstand an einem ganz normalen Dienstag. Vier parallele Anfragen. Zwei davon „sofort". Eine eigentlich schon gestern fällig. Und der Gedanke: <strong>Das kann nicht so bleiben.</strong>
+      </p>
+      <p class="about-body">
+        Nicht weil der Job zu viel wird. Sondern weil die meisten Assistenzen mit denselben Tools arbeiten wie vor zehn Jahren — während KI längst in der Lage wäre, einen Großteil der Routinearbeit zu übernehmen.
+      </p>
+      <p class="about-body">
+        Desk Revolution ist keine Beratung. Kein Coaching. Keine Theorie über die Zukunft der Arbeit. Es ist ein konkretes System — für Assistenzen, die jetzt anfangen wollen, smarter zu arbeiten. Mit Tools, die direkt in Word, Excel und Outlook funktionieren. Ohne Umwege.
+      </p>
+      <blockquote class="about-quote">
+        „Wer jetzt lernt, KI zu nutzen, wird unersetzlich. Wer wartet, wird ersetzt. Das ist keine Drohung. Das ist die Realität."
+      </blockquote>
+      <span class="about-name">Stefanie Weyland</span>
+      <p class="about-role">Assistenz bei Brookfield Properties Germany · Berlin</p>
+    </div>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+<!-- ════════════════════════════════════
+     PAIN — Probleme benennen
+════════════════════════════════════ -->
+<section id="pain">
+  <p class="pain-intro reveal">
+    Termine die sich überschneiden. E-Mails die keine Antwort dulden. Aufgaben die alle gleichzeitig dringend sind.<br>
+    <em>Kennt man. Lebt man. Jeden Tag.</em>
+  </p>
+  <div class="pain-grid">
+    <div class="pain-card reveal">
+      <svg class="pain-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/>
+      </svg>
+      <p class="pain-title">Dein Postfach läuft über.<br>Deine To-do-Liste auch.</p>
+      <p class="pain-body">Und trotzdem soll alles laufen. Kein Puffer. Kein Spielraum. Nur der nächste Task.</p>
+    </div>
+    <div class="pain-card reveal d1">
+      <svg class="pain-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <p class="pain-title">Du weißt, dass KI hilft.<br>Aber wo fängst du an?</p>
+      <p class="pain-body">Niemand hat Zeit für stundenlange Tutorials. Du willst es einfach nutzen — direkt, heute, in deinem Alltag.</p>
+    </div>
+    <div class="pain-card reveal d2">
+      <svg class="pain-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+      </svg>
+      <p class="pain-title">Alle reden über KI.<br>Niemand zeigt dir wie.</p>
+      <p class="pain-body">Nicht für deine Aufgaben. Nicht für dein Tool. Nicht für den Assistenz-Alltag. Bis jetzt.</p>
+    </div>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+<!-- ════════════════════════════════════
+     SESSIONS — Coming Soon
+════════════════════════════════════ -->
+<section id="sessions">
+  <div class="sessions-header">
+    <span class="sessions-tag reveal">KI im Klartext · Online-Sessions</span>
+    <h2 class="sessions-hl reveal d1">30 Minuten.<br>Ein Problem.<br>Eine echte Lösung.</h2>
+    <p class="sessions-sub reveal d2">
+      Konkrete Online-Sessions für Assistenzen — ohne Technik-Sprache, ohne Theorie. Jede Session löst ein Problem das du kennst. Direkt anwendbar am nächsten Tag, in deiner gewohnten Microsoft-Umgebung.
+    </p>
+  </div>
+
+  <div class="sessions-grid">
+    <div class="session-card reveal">
+      <div class="session-num">01</div>
+      <p class="session-title">Meetingprotokoll in 4 Minuten</p>
+      <p class="session-body">Claude liest deine handschriftlichen Notizen und schreibt das Protokoll — direkt in Word. Drei Versionen: Führungsebene, Ablage, Verteiler.</p>
+    </div>
+    <div class="session-card reveal d1">
+      <div class="session-num">02</div>
+      <p class="session-title">Priorisieren wenn alles dringend ist</p>
+      <p class="session-body">Ein Prompt der fünf parallele Anfragen nach Impact und Aufwand bewertet — und dir in 30 Sekunden Klarheit gibt. Ohne Bauchgefühl.</p>
+    </div>
+    <div class="session-card reveal d2">
+      <div class="session-num">03</div>
+      <p class="session-title">E-Mails die ankommen</p>
+      <p class="session-body">Schwierige Absagen, Eskalationen, Bitten nach oben — KI hilft dir den richtigen Ton zu finden. Für jeden Empfänger. In Sekunden.</p>
+    </div>
+    <div class="session-card reveal d3">
+      <div class="session-num">04</div>
+      <p class="session-title">Excel ohne Formelfrustration</p>
+      <p class="session-body">Beschreibe auf Deutsch was du berechnen willst — Claude baut die Formel und erklärt sie. Direkt in Excel. Nie wieder googeln.</p>
+    </div>
+    <div class="session-card reveal">
+      <div class="session-num">05</div>
+      <p class="session-title">Präsentationen halbieren</p>
+      <p class="session-body">Gliederung, Kernbotschaften, Stichpunkte — KI liefert die Struktur. Du bringst das Branding. 80/20 statt von Null.</p>
+    </div>
+    <div class="session-card reveal d1">
+      <div class="session-num">06</div>
+      <p class="session-title">Dein persönlicher KI-Stil</p>
+      <p class="session-body">KI schreibt in deiner Stimme. Du gibst Beispieltexte — Claude übernimmt Ton, Satzlänge und Energie. Authentisch, nicht generisch.</p>
+    </div>
+  </div>
+
+  <div class="coming-soon-box reveal">
+    <div class="cs-left">
+      <span class="cs-badge">Coming Soon</span>
+      <p class="cs-text">Die Sessions starten bald.<br>Sei dabei wenn es losgeht.</p>
+      <p class="cs-sub">Trag dich in die Warteliste ein — du erfährst als Erste wann es losgeht.</p>
+    </div>
+    <a href="#waitlist" class="btn">Warteliste</a>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+<!-- ════════════════════════════════════
+     WAITLIST
+════════════════════════════════════ -->
+<section id="waitlist">
+  <h2 class="waitlist-hl reveal">Sei dabei wenn es losgeht.</h2>
+  <p class="waitlist-sub reveal d1">Kein Spam. Nur eine E-Mail wenn die erste Session startet.</p>
+  <form id="wlForm" class="reveal d2">
+    <div class="form-row">
+      <input type="text" id="wlName" placeholder="Vorname" required aria-label="Vorname">
+      <input type="email" id="wlEmail" placeholder="E-Mail-Adresse" required aria-label="E-Mail-Adresse">
+      <button type="submit" class="btn">Eintragen</button>
+    </div>
+    <p class="form-note">Kein Spam. Abmeldung jederzeit möglich.</p>
+  </form>
+  <p class="success-msg" id="successMsg">Danke — du bist dabei. Bis bald. ✦</p>
+</section>
+
+<!-- ════════════════════════════════════
+     FOOTER
+════════════════════════════════════ -->
+<footer>
+  <div class="footer-left">
+    <span class="footer-brand">Desk Revolution · Stefanie Weyland</span>
+    <span class="footer-claim">Werde die Assistentin der Zukunft — nutze KI.</span>
+  </div>
+  <div class="footer-links">
+    <a href="https://www.linkedin.com/in/stefanieweyland/" target="_blank" rel="noopener">LinkedIn</a>
+    <a onclick="openModal('impressum')">Impressum</a>
+    <a onclick="openModal('datenschutz')">Datenschutz</a>
+    <a onclick="openModal('barrierefreiheit')">Barrierefreiheit</a>
+  </div>
+</footer>
+
+<!-- MODAL: IMPRESSUM -->
+<div class="modal-overlay" id="modal-impressum" role="dialog" aria-modal="true" aria-labelledby="imp-h">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('impressum')" aria-label="Schließen">&times;</button>
+    <h2 id="imp-h">Impressum</h2>
+    <h3>Angaben gemäß § 5 TMG</h3>
+    <p>Stefanie Weyland<br>Bausdorfstr. 14A<br>12621 Berlin<br>E-Mail: StWeyland@aol.de</p>
+    <h3>Verantwortlich für den Inhalt</h3>
+    <p>Stefanie Weyland (Adresse wie oben)</p>
+    <h3>Haftungshinweis</h3>
+    <p>Die Inhalte dieser Seite wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte wird keine Gewähr übernommen. Als Diensteanbieter bin ich gemäß § 7 Abs. 1 TMG für eigene Inhalte verantwortlich.</p>
+    <h3>Externe Links</h3>
+    <p>Diese Website enthält Links zu externen Websites. Auf deren Inhalte habe ich keinen Einfluss und übernehme dafür keine Haftung.</p>
+  </div>
+</div>
+
+<!-- MODAL: DATENSCHUTZ -->
+<div class="modal-overlay" id="modal-datenschutz" role="dialog" aria-modal="true" aria-labelledby="ds-h">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('datenschutz')" aria-label="Schließen">&times;</button>
+    <h2 id="ds-h">Datenschutzerklärung</h2>
+    <h3>Verantwortliche Stelle</h3>
+    <p>Stefanie Weyland · StWeyland@aol.de</p>
+    <h3>Erhobene Daten</h3>
+    <p>Bei der Eintragung in die Warteliste werden Vorname und E-Mail-Adresse erhoben. Diese Daten werden ausschließlich zur Benachrichtigung über den Start der ersten Session genutzt.</p>
+    <h3>Zweck der Verarbeitung</h3>
+    <p>Die Daten werden verwendet um dich über den Start von „KI im Klartext" zu informieren. Es erfolgt keine Weitergabe an Dritte.</p>
+    <h3>Speicherdauer</h3>
+    <p>Deine Daten werden gespeichert bis die Benachrichtigung erfolgt ist oder du dich abmeldest.</p>
+    <h3>Deine Rechte</h3>
+    <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Widerspruch. Wende dich jederzeit an: StWeyland@aol.de</p>
+    <h3>Rechtsgrundlage</h3>
+    <p>Die Verarbeitung erfolgt auf Grundlage deiner Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Die Einwilligung kann jederzeit widerrufen werden.</p>
+    <h3>Cookies & Tracking</h3>
+    <p>Diese Website verwendet keine Cookies und keine Tracking-Tools.</p>
+  </div>
+</div>
+
+<!-- MODAL: BARRIEREFREIHEIT -->
+<div class="modal-overlay" id="modal-barrierefreiheit" role="dialog" aria-modal="true" aria-labelledby="bf-h">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('barrierefreiheit')" aria-label="Schließen">&times;</button>
+    <h2 id="bf-h">Barrierefreiheit</h2>
+    <h3>Unser Anspruch</h3>
+    <p>Diese Website wurde mit dem Ziel gestaltet, möglichst vielen Menschen zugänglich zu sein – unabhängig von technischen Mitteln oder körperlichen Einschränkungen.</p>
+    <h3>Umgesetzte Maßnahmen</h3>
+    <ul>
+      <li>Semantisches HTML für Screenreader-Kompatibilität</li>
+      <li>Ausreichende Farbkontraste in beiden Modi (Hell & Dunkel)</li>
+      <li>Tastaturnavigation für alle interaktiven Elemente</li>
+      <li>ARIA-Labels für Icons und Buttons</li>
+      <li>Responsives Design für alle Bildschirmgrößen</li>
+      <li>Keine automatisch startenden Animationen oder Töne</li>
+    </ul>
+    <h3>Bekannte Einschränkungen</h3>
+    <p>Diese Website befindet sich im Aufbau. Rückmeldungen sind willkommen.</p>
+    <h3>Kontakt</h3>
+    <p>StWeyland@aol.de</p>
+  </div>
+</div>
+
+<script>
+  /* THEME */
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    const d = t === 'dark';
+    document.getElementById('tIcon').textContent = d ? '🌙' : '☀️';
+    document.getElementById('tLbl').textContent  = d ? 'Dunkel' : 'Hell';
+    localStorage.setItem('dr-theme', t);
+  }
+  function toggleTheme() {
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  }
+  const saved = localStorage.getItem('dr-theme');
+  if (saved) { applyTheme(saved); }
+  else if (window.matchMedia('(prefers-color-scheme: light)').matches) { applyTheme('light'); }
+
+  /* REVEAL */
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  document.querySelectorAll('#hero .reveal').forEach(el => el.classList.add('visible'));
+
+  /* MODALS */
+  function openModal(id)  { document.getElementById('modal-'+id).classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeModal(id) { document.getElementById('modal-'+id).classList.remove('open'); document.body.style.overflow=''; }
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if(e.target===m){ m.classList.remove('open'); document.body.style.overflow=''; } });
+  });
+  document.addEventListener('keydown', e => {
+    if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>{ m.classList.remove('open'); document.body.style.overflow=''; });
+  });
+
+  /* FORM */
+  document.getElementById('wlForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const n = encodeURIComponent(document.getElementById('wlName').value);
+    const em = encodeURIComponent(document.getElementById('wlEmail').value);
+    window.location.href = `mailto:StWeyland@aol.de?subject=Warteliste%20Desk%20Revolution&body=Name%3A%20${n}%0AE-Mail%3A%20${em}`;
+    this.style.display = 'none';
+    document.getElementById('successMsg').style.display = 'block';
+  });
+</script>
+</body>
+</html>
