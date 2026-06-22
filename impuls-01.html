@@ -59,7 +59,7 @@
   .sib-form { background-color: transparent !important; text-align: left !important; padding: 0 !important; }
   #sib-form-container { background: transparent !important; }
   #sib-container { background-color: transparent !important; border: none !important; border-radius: 0 !important; max-width: 100% !important; text-align: left !important; padding: 0 !important; }
-  #sib-container .sib-form-block:first-child { display: none !important; }
+  #sib-form > div:first-child .sib-form-block { display: none !important; }
   .entry__label { font-family: 'League Spartan', sans-serif !important; font-size: 0.72rem !important; font-weight: 700 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; color: rgba(255,255,255,0.5) !important; margin-bottom: 0.4rem !important; }
   .entry__specification { display: none !important; }
   #sib-container input.input { background: rgba(255,255,255,0.07) !important; border: 1px solid rgba(255,255,255,0.15) !important; border-radius: 3px !important; padding: 0.9rem 1.1rem !important; font-family: 'League Spartan', sans-serif !important; font-size: 0.88rem !important; color: var(--white) !important; width: 100% !important; box-sizing: border-box !important; transition: border-color 0.2s !important; }
@@ -67,6 +67,7 @@
   #sib-container input.input::placeholder { color: rgba(255,255,255,0.28) !important; }
   .sib-form-block__button { width: 100% !important; padding: 1rem 1.5rem !important; background: var(--forest) !important; border: none !important; border-radius: 3px !important; font-family: 'League Spartan', sans-serif !important; font-size: 0.82rem !important; font-weight: 800 !important; letter-spacing: 0.14em !important; text-transform: uppercase !important; color: var(--white) !important; cursor: pointer !important; text-align: center !important; transition: background 0.2s !important; }
   .sib-form-block__button:hover { background: #354a3e !important; }
+  .sib-form-block__button svg.sib-hide-loader-icon { display: none !important; }
   .sib-form__declaration { display: none !important; }
   #success-message, #error-message { max-width: 100% !important; border-radius: 3px !important; font-family: 'League Spartan', sans-serif !important; font-size: 0.85rem !important; }
 
@@ -180,7 +181,6 @@
     <div class="lp-signet">D<em>R</em></div>
     <div class="lp-author-text">
       <strong>Stefanie Weyland · Desk Revolution</strong>
-      Assistenz bei Brookfield Properties Germany · Berlin<br>
       „Werde die Assistenz der Zukunft — nutze KI."
     </div>
   </div>
