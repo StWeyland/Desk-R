@@ -1,0 +1,40 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&amp;family=League+Spartan:wght@700;800&amp;display=swap');
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#1e1e1e"/>
+
+  <!-- Subtle texture lines -->
+  <line x1="0" y1="420" x2="1200" y2="420" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+  <line x1="0" y1="210" x2="1200" y2="210" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+  <line x1="400" y1="0" x2="400" y2="630" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+  <line x1="800" y1="0" x2="800" y2="630" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+
+  <!-- Left accent bar -->
+  <rect x="80" y="80" width="4" height="470" fill="#41584c"/>
+
+  <!-- Tag -->
+  <rect x="108" y="80" width="280" height="32" fill="none" stroke="#8fa99b" stroke-width="1" opacity="0.5"/>
+  <text x="122" y="101" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#8fa99b" letter-spacing="3">KI IM KLARTEXT · #1</text>
+
+  <!-- Main headline -->
+  <text x="108" y="200" font-family="Georgia, serif" font-size="88" font-weight="600" fill="#ffffff" letter-spacing="-2">Keine Zeit.</text>
+  <text x="108" y="300" font-family="Georgia, serif" font-size="88" font-weight="600" fill="#ffffff" letter-spacing="-2">Kein Kontext.</text>
+  <text x="108" y="400" font-family="Georgia, serif" font-size="88" font-weight="600" font-style="italic" fill="#8fa99b" letter-spacing="-2">Trotzdem die</text>
+  <text x="108" y="490" font-family="Georgia, serif" font-size="88" font-weight="600" font-style="italic" fill="#8fa99b" letter-spacing="-2">richtige Mail.</text>
+
+  <!-- Divider -->
+  <line x1="108" y1="530" x2="700" y2="530" stroke="rgba(143,169,155,0.25)" stroke-width="1"/>
+
+  <!-- Sub -->
+  <text x="108" y="560" font-family="Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.45)" letter-spacing="0.5">Kostenloser Leitfaden · 3 Prompt-Varianten</text>
+
+  <!-- DeskR. logo bottom right -->
+  <text x="1080" y="560" font-family="Georgia, serif" font-size="28" font-weight="600" fill="rgba(255,255,255,0.15)" text-anchor="middle">Desk<tspan font-style="italic" fill="#8fa99b">R.</tspan></text>
+  <line x1="1010" y1="565" x2="1150" y2="565" stroke="rgba(143,169,155,0.2)" stroke-width="1"/>
+  <text x="1080" y="582" font-family="Arial, sans-serif" font-size="9" font-weight="800" fill="rgba(143,169,155,0.4)" text-anchor="middle" letter-spacing="4">REVOLUTION</text>
+</svg>
