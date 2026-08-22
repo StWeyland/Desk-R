@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desk Revolution KI-Kompass</title>
+<meta name="description" content="Finde in 5 Minuten heraus, wo du auf dem Weg von der klassischen Assistenz zur AI Chief of Staff stehst — mit persönlichem Ergebnisprofil und deinem dominanten Engpass.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --burgundy:#4A081E;
+    --burgundy-light: #63122f;
+    --cream:#FAF7F0;
+    --deep-salmon:#983D15;
+    --salmon:#FCA27A;
+    --pale-salmon:#FEC7AF;
+    --pale-tint:#FFF2EB;
+    --ink: var(--burgundy);
+    --line: rgba(255,242,235,0.14);
+    --line-dark: rgba(74,8,30,0.12);
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; color-scheme: light; }
+
+  body{
+    font-family:'League Spartan', sans-serif;
+    background: var(--burgundy);
+    color: var(--pale-tint);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+
+  /* texture */
+  body::before{
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse 55% 45% at 85% 8%, rgba(252,162,122,0.14), transparent 65%),
+      radial-gradient(ellipse 45% 40% at 8% 95%, rgba(152,61,21,0.20), transparent 65%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .app{
+    position:relative;
+    z-index:1;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ── TOP BAR / BRAND ── */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:1.6rem 5vw 0;
+  }
+
+  .brand-mark{
+    display:flex;
+    align-items:baseline;
+    gap:0.6em;
+  }
+
+  .brand-mark .l1{
+    font-family:'Playfair Display', serif;
+    font-size:1.05rem;
+    font-weight:600;
+    color: var(--pale-tint);
+    letter-spacing:-0.01em;
+  }
+  .brand-mark .l1 em{ font-style:italic; color: var(--salmon); }
+
+  .brand-mark .l2{
+    font-family:'League Spartan', sans-serif;
+    font-size:0.6rem;
+    font-weight:800;
+    letter-spacing:0.32em;
+    text-transform:uppercase;
+    color: rgba(255,242,235,0.45);
+  }
+
+  /* ── COMPASS PROGRESS ── */
+  .compass-wrap{
+    max-width:640px;
+    margin:0 auto;
+    width:100%;
+    padding:2rem 6vw 0;
+    display:none;
+  }
+  .compass-wrap.show{ display:block; }
+
+  .compass-row{
+    display:flex;
+    align-items:center;
+    gap:1.1rem;
+    margin-bottom:1.1rem;
+  }
+
+  .compass-dial{
+    width:34px; height:34px;
+    flex-shrink:0;
+    position:relative;
+  }
+  .compass-dial svg{ width:100%; height:100%; }
+  .compass-needle{
+    transform-origin: 50% 50%;
+    transition: transform 0.6s cubic-bezier(.4,0,.2,1);
+  }
+
+  .stations{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:0.4rem;
+  }
+
+  .station-seg{
+    flex:1;
+    height:3px;
+    background: rgba(255,242,235,0.14);
+    border-radius:2px;
+    overflow:hidden;
+    position:relative;
+  }
+  .station-seg .fill{
+    position:absolute; inset:0 100% 0 0;
+    background: var(--salmon);
+    transition: right 0.5s cubic-bezier(.4,0,.2,1);
+  }
+
+  .station-labels{
+    display:flex;
+    justify-content:space-between;
+    font-size:0.6rem;
+    font-weight:600;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color: rgba(255,242,235,0.35);
+  }
+  .station-labels span{ flex:1; text-align:center; transition: color 0.3s; }
+  .station-labels span:first-child{ text-align:left; }
+  .station-labels span:last-child{ text-align:right; }
+  .station-labels span.active{ color: var(--salmon); }
+  .station-labels span.done{ color: rgba(255,242,235,0.7); }
+
+  /* ── SCREEN CONTAINER ── */
+  .stage{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:2.5rem 6vw 4rem;
+  }
+
+  .screen{ display:none; width:100%; }
+  .screen.active{ display:block; animation: fadeUp 0.5s ease both; }
+
+  @keyframes fadeUp{
+    from{ opacity:0; transform:translateY(16px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  /* ── LANDING ── */
+  .landing{ max-width:680px; margin:0 auto; text-align:center; }
+
+  .eyebrow{
+    display:inline-block;
+    font-size:0.68rem;
+    font-weight:700;
+    letter-spacing:0.24em;
+    text-transform:uppercase;
+    color: var(--salmon);
+    border:1px solid rgba(252,162,122,0.4);
+    padding:0.4rem 1rem;
+    margin-bottom:2rem;
+  }
+
+  .headline{
+    font-family:'Playfair Display', serif;
+    font-size:clamp(2.4rem, 6vw, 3.8rem);
+    font-weight:600;
+    line-height:1.08;
+    letter-spacing:-0.01em;
+    color: var(--pale-tint);
+    margin-bottom:1.3rem;
+  }
+  .headline em{ font-style:italic; color: var(--salmon); }
+
+  .sub{
+    font-size:1.05rem;
+    line-height:1.7;
+    color: rgba(255,242,235,0.65);
+    max-width:46ch;
+    margin:0 auto 3rem;
+    font-weight:400;
+  }
+
+  .path-preview{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.6rem;
+    flex-wrap:wrap;
+    margin-bottom:3rem;
+  }
+
+  .path-step{
+    font-size:0.72rem;
+    font-weight:600;
+    letter-spacing:0.03em;
+    color: rgba(255,242,235,0.55);
+    padding:0.5rem 0.9rem;
+    border:1px solid rgba(255,242,235,0.18);
+    border-radius:100px;
+  }
+  .path-step.final{ color: var(--burgundy); background: var(--salmon); border-color: var(--salmon); font-weight:700; }
+  .path-arrow{ color: rgba(255,242,235,0.3); font-size:0.8rem; }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:0.6rem;
+    font-family:'League Spartan', sans-serif;
+    font-size:0.92rem;
+    font-weight:700;
+    letter-spacing:0.03em;
+    background: var(--deep-salmon);
+    color: var(--pale-tint);
+    border:none;
+    padding:1rem 2rem;
+    border-radius:4px;
+    cursor:pointer;
+    transition: background 0.2s, transform 0.15s;
+    text-decoration:none;
+  }
+  .btn:hover{ background:#7c3212; transform:translateY(-1px); }
+  .btn:active{ transform:translateY(0); }
+  .btn:focus-visible{ outline:2px solid var(--salmon); outline-offset:3px; }
+
+  .btn-ghost{
+    background:transparent;
+    border:1px solid rgba(255,242,235,0.25);
+    color: rgba(255,242,235,0.75);
+  }
+  .btn-ghost:hover{ background: rgba(255,242,235,0.06); }
+
+  .meta-line{
+    margin-top:1.6rem;
+    font-size:0.76rem;
+    color: rgba(255,242,235,0.4);
+    letter-spacing:0.03em;
+  }
+
+  /* ── INTRO / TEXT SCREEN ── */
+  .card{
+    max-width:600px;
+    margin:0 auto;
+    background: var(--pale-tint);
+    color: var(--burgundy);
+    border-radius:6px;
+    padding:3rem 2.8rem;
+  }
+
+  .card-title{
+    font-family:'Playfair Display', serif;
+    font-size:1.7rem;
+    font-weight:600;
+    margin-bottom:1.2rem;
+    letter-spacing:-0.01em;
+  }
+
+  .card-body{
+    font-size:0.98rem;
+    line-height:1.75;
+    color:#4a2a30;
+    margin-bottom:1rem;
+  }
+
+  .card-note{
+    font-size:0.85rem;
+    font-style:italic;
+    color: var(--deep-salmon);
+    margin-bottom:2rem;
+    padding-left:0.9rem;
+    border-left:2px solid var(--deep-salmon);
+  }
+
+  .card .btn{ background: var(--deep-salmon); }
+
+  /* ── QUESTION SCREEN ── */
+  .q-wrap{ max-width:640px; margin:0 auto; }
+
+  .station-tag{
+    font-size:0.68rem;
+    font-weight:700;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color: var(--salmon);
+    margin-bottom:0.8rem;
+  }
+
+  .station-intro-line{
+    font-size:0.92rem;
+    color: rgba(255,242,235,0.6);
+    margin-bottom:1.6rem;
+    line-height:1.6;
+  }
+
+  .q-title{
+    font-family:'Playfair Display', serif;
+    font-size:clamp(1.5rem, 3vw, 1.95rem);
+    font-weight:600;
+    line-height:1.3;
+    color: var(--pale-tint);
+    margin-bottom:2.2rem;
+    letter-spacing:-0.005em;
+  }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:0.8rem;
+    margin-bottom:2rem;
+  }
+
+  .option{
+    display:flex;
+    align-items:flex-start;
+    gap:1rem;
+    text-align:left;
+    background: rgba(255,242,235,0.05);
+    border:1px solid rgba(255,242,235,0.16);
+    border-radius:5px;
+    padding:1.05rem 1.3rem;
+    cursor:pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    font-family:'League Spartan', sans-serif;
+    color: var(--pale-tint);
+  }
+
+  .option:hover{ background: rgba(255,242,235,0.1); border-color: rgba(252,162,122,0.5); }
+  .option:active{ transform: scale(0.99); }
+  .option:focus-visible{ outline:2px solid var(--salmon); outline-offset:2px; }
+
+  .option .letter{
+    flex-shrink:0;
+    width:26px; height:26px;
+    border-radius:50%;
+    border:1px solid rgba(255,242,235,0.3);
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.72rem;
+    font-weight:700;
+    color: rgba(255,242,235,0.6);
+  }
+  .option .opt-text{
+    font-size:0.92rem;
+    line-height:1.55;
+    color: rgba(255,242,235,0.85);
+    padding-top:0.15rem;
+  }
+
+  .q-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+
+  .link-btn{
+    background:none;
+    border:none;
+    font-family:'League Spartan', sans-serif;
+    font-size:0.82rem;
+    font-weight:600;
+    color: rgba(255,242,235,0.45);
+    cursor:pointer;
+    letter-spacing:0.02em;
+  }
+  .link-btn:hover{ color: rgba(255,242,235,0.8); }
+
+  /* ── SEGMENT SCREEN ── */
+  .seg-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0.7rem;
+    margin-bottom:2rem;
+  }
+  @media (max-width:560px){ .seg-grid{ grid-template-columns:1fr; } }
+
+  .seg-opt{
+    font-family:'League Spartan', sans-serif;
+    font-size:0.85rem;
+    font-weight:600;
+    text-align:left;
+    background: rgba(255,242,235,0.05);
+    border:1px solid rgba(255,242,235,0.16);
+    color: rgba(255,242,235,0.85);
+    border-radius:5px;
+    padding:0.9rem 1.1rem;
+    cursor:pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .seg-opt:hover{ background: rgba(255,242,235,0.1); border-color: rgba(252,162,122,0.5); }
+  .seg-opt.selected{ background: var(--salmon); color: var(--burgundy); border-color: var(--salmon); }
+
+  /* ── LEAD CAPTURE ── */
+  .form-row{ display:flex; flex-direction:column; gap:1rem; margin-bottom:1.5rem; }
+
+  .field label{
+    display:block;
+    font-size:0.72rem;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color: var(--deep-salmon);
+    margin-bottom:0.4rem;
+  }
+
+  .field input, .field select{
+    width:100%;
+    font-family:'League Spartan', sans-serif;
+    font-size:16px; /* nie kleiner als 16px — sonst zoomt iOS Safari beim Antippen und das Feld springt aus dem Bild */
+    padding:0.85rem 1rem;
+    border:1px solid rgba(74,8,30,0.2);
+    border-radius:4px;
+    background: #ffffff !important;
+    color: var(--burgundy) !important;
+    caret-color: var(--burgundy);
+    -webkit-appearance:none;
+    appearance:none;
+    color-scheme: light; /* verhindert, dass Dark-Mode-Handys das Feld selbst einfärben */
+    outline:none;
+  }
+  .field input:focus, .field select:focus{ border-color: var(--deep-salmon); }
+  .field.optional label::after{ content:' (optional)'; text-transform:none; font-weight:400; letter-spacing:0; color:#8a6a60; }
+
+  .field.has-error input{ border-color:#b3261e; background:#fff !important; }
+  .field-error{
+    display:none;
+    font-size:0.76rem;
+    color:#b3261e;
+    margin-top:0.35rem;
+    font-weight:600;
+  }
+  .field.has-error .field-error{ display:block; }
+
+  /* Autofill (Safari/Chrome füllen Felder sonst oft mit eigenem, unlesbarem Farbschema) */
+  .field input:-webkit-autofill,
+  .field input:-webkit-autofill:hover,
+  .field input:-webkit-autofill:focus{
+    -webkit-text-fill-color: var(--burgundy) !important;
+    -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+    box-shadow: 0 0 0px 1000px #ffffff inset !important;
+    caret-color: var(--burgundy) !important;
+  }
+
+  .privacy{
+    font-size:0.72rem;
+    color:#8a6a60;
+    line-height:1.5;
+    margin-top:1rem;
+  }
+
+  /* ── RESULT SCREEN ── */
+  .result-wrap{ max-width:680px; margin:0 auto; }
+
+  .confirm-banner{
+    background: var(--pale-salmon);
+    color: var(--burgundy);
+    border-radius:6px;
+    padding:1.1rem 1.4rem;
+    margin-bottom:2rem;
+    display:flex;
+    align-items:flex-start;
+    gap:0.8rem;
+  }
+  .confirm-banner .cb-icon{ font-size:1.1rem; line-height:1; flex-shrink:0; }
+  .confirm-banner p{ font-size:0.85rem; line-height:1.55; font-weight:500; }
+  .confirm-banner strong{ font-weight:700; }
+
+  .result-path{
+    display:flex;
+    gap:0.5rem;
+    margin-bottom:2.2rem;
+  }
+  .result-path .rp-step{
+    flex:1;
+    text-align:center;
+    padding:0.6rem 0.4rem;
+    border-radius:4px;
+    font-size:0.65rem;
+    font-weight:700;
+    letter-spacing:0.02em;
+    background: rgba(255,242,235,0.06);
+    color: rgba(255,242,235,0.35);
+    border:1px solid rgba(255,242,235,0.12);
+  }
+  .result-path .rp-step.current{
+    background: var(--salmon);
+    color: var(--burgundy);
+    border-color: var(--salmon);
+  }
+
+  .score-line{
+    font-size:0.78rem;
+    color: rgba(255,242,235,0.45);
+    letter-spacing:0.04em;
+    margin-bottom:0.6rem;
+  }
+
+  .result-eyebrow{
+    font-size:0.68rem;
+    font-weight:700;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color: var(--salmon);
+    margin-bottom:0.7rem;
+  }
+
+  .result-title{
+    font-family:'Playfair Display', serif;
+    font-size:clamp(2rem, 5vw, 2.8rem);
+    font-weight:600;
+    color: var(--pale-tint);
+    line-height:1.15;
+    margin-bottom:1rem;
+  }
+
+  .result-claim{
+    font-size:1.1rem;
+    color: rgba(255,242,235,0.75);
+    line-height:1.6;
+    max-width:52ch;
+    margin-bottom:1.4rem;
+  }
+
+  .result-focus-tag{
+    display:inline-block;
+    font-size:0.72rem;
+    font-weight:700;
+    letter-spacing:0.04em;
+    color: var(--burgundy);
+    background: var(--salmon);
+    padding:0.45rem 1rem;
+    border-radius:100px;
+    margin-bottom:2.4rem;
+  }
+
+  .quote-block{
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+    font-size:1.2rem;
+    line-height:1.55;
+    color: rgba(255,242,235,0.85);
+    border-left:3px solid var(--salmon);
+    padding-left:1.2rem;
+    margin-bottom:2.4rem;
+    max-width:56ch;
+  }
+
+  .result-card{
+    background: var(--pale-tint);
+    color: var(--burgundy);
+    border-radius:6px;
+    padding:2.2rem 2.4rem;
+    margin-bottom:1.4rem;
+  }
+
+  .result-card .label{
+    font-size:0.68rem;
+    font-weight:700;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color: var(--deep-salmon);
+    margin-bottom:0.7rem;
+  }
+
+  .result-card p{ font-size:0.95rem; line-height:1.7; color:#3a1a20; }
+
+  /* AHA-Moment */
+  .aha-card{
+    background: var(--pale-tint);
+    color: var(--burgundy);
+    border-radius:6px;
+    padding:2.4rem 2.4rem;
+    margin-bottom:1.4rem;
+    border:1px solid rgba(152,61,21,0.15);
+  }
+  .aha-card .label{
+    font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
+    color: var(--deep-salmon); margin-bottom:1rem;
+  }
+  .aha-card p{ font-size:1.02rem; line-height:1.75; color:#3a1a20; margin-bottom:0.9rem; }
+  .aha-card p:last-child{ margin-bottom:0; }
+
+  /* Was du bereits richtig machst */
+  .strengths-list{ list-style:none; }
+  .strengths-list li{
+    display:flex; gap:0.7rem; align-items:flex-start;
+    font-size:0.95rem; line-height:1.65; color:#3a1a20;
+    margin-bottom:0.7rem;
+  }
+  .strengths-list li:last-child{ margin-bottom:0; }
+  .strengths-list li::before{
+    content:'✓';
+    flex-shrink:0;
+    font-weight:700;
+    color: var(--deep-salmon);
+    margin-top:0.1rem;
+  }
+
+  /* Stärke / Hebel Insight-Karten */
+  .insight-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1rem;
+    margin-bottom:1.4rem;
+  }
+  @media (max-width:600px){ .insight-grid{ grid-template-columns:1fr; } }
+
+  .insight-card{
+    background: var(--pale-tint);
+    color: var(--burgundy);
+    border-radius:6px;
+    padding:1.6rem 1.6rem;
+  }
+  .insight-card .ic-icon{ font-size:1.4rem; margin-bottom:0.5rem; display:block; }
+  .insight-card .label{
+    font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
+    margin-bottom:0.3rem;
+  }
+  .insight-card.strength .label{ color: var(--deep-salmon); }
+  .insight-card.lever .label{ color: #7a3a10; }
+  .insight-card .ic-field{
+    font-family:'Playfair Display', serif;
+    font-size:1.15rem;
+    font-weight:600;
+    margin-bottom:0.6rem;
+  }
+  .insight-card p.ic-text{ font-size:0.88rem; line-height:1.6; color:#3a1a20; }
+
+  /* Kompetenzprofil-Balken */
+  .comp-row{ margin-bottom:1.1rem; }
+  .comp-row:last-child{ margin-bottom:0; }
+  .comp-head{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:0.82rem; font-weight:700; margin-bottom:0.4rem;
+  }
+  .comp-head .comp-score{ font-size:0.76rem; font-weight:600; color: var(--deep-salmon); }
+  .comp-bar{
+    height:8px;
+    background: rgba(74,8,30,0.08);
+    border-radius:100px;
+    overflow:hidden;
+  }
+  .comp-fill{
+    height:100%;
+    background: var(--deep-salmon);
+    border-radius:100px;
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* Dominanter Engpass */
+  .bottleneck-card{
+    background: var(--burgundy-light);
+    border:1px solid rgba(252,162,122,0.35);
+    border-radius:6px;
+    padding:2.1rem 2.3rem;
+    margin-bottom:1.4rem;
+  }
+  .bottleneck-card .label{
+    font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
+    color: var(--salmon); margin-bottom:0.7rem;
+  }
+  .bottleneck-card h3{
+    font-family:'Playfair Display', serif; font-size:1.3rem; font-weight:600;
+    color: var(--pale-tint); margin-bottom:0.9rem; line-height:1.3;
+  }
+  .bottleneck-card p{ font-size:0.92rem; line-height:1.7; color: rgba(255,242,235,0.78); }
+
+  /* Digitales Team heute -> nächste Stufe */
+  .split-block{ margin-bottom:1.2rem; }
+  .split-block:last-child{ margin-bottom:0; }
+  .split-title{ font-size:0.78rem; font-weight:700; margin-bottom:0.5rem; color:#3a1a20; }
+  .split-bar{
+    display:flex;
+    width:100%;
+    height:22px;
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .split-seg{ display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:700; color:#fff; }
+  .split-legend{
+    display:flex; flex-wrap:wrap; gap:0.9rem; margin-top:0.6rem; font-size:0.72rem; color:#5a3a40;
+  }
+  .split-legend span{ display:inline-flex; align-items:center; gap:0.35rem; }
+  .split-legend i{ width:9px; height:9px; border-radius:2px; display:inline-block; }
+
+  /* Produktempfehlung */
+  .product-card{
+    background: linear-gradient(160deg, var(--pale-salmon), var(--pale-tint) 65%);
+    color: var(--burgundy);
+    border-radius:8px;
+    padding:2.5rem 2.5rem;
+    margin-top:2.2rem;
+    margin-bottom:1.4rem;
+  }
+  .product-card > .label{
+    font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
+    color: var(--deep-salmon); margin-bottom:0.6rem;
+  }
+  .product-position{
+    display:inline-block; font-size:0.68rem; font-weight:700; letter-spacing:0.05em;
+    background: var(--burgundy); color: var(--pale-tint);
+    padding:0.32rem 0.85rem; border-radius:100px; margin-bottom:1rem;
+  }
+  .product-card h3{
+    font-family:'Playfair Display', serif; font-size:1.55rem; font-weight:600;
+    margin-bottom:1rem; line-height:1.25;
+  }
+  .product-why{ font-size:0.96rem; line-height:1.75; color:#3a1a20; margin-bottom:1.3rem; }
+  .product-list{ list-style:none; margin-bottom:1.7rem; }
+  .product-list li{
+    display:flex; gap:0.7rem; align-items:flex-start;
+    font-size:0.9rem; line-height:1.6; color:#3a1a20;
+    margin-bottom:0.6rem;
+  }
+  .product-list li:last-child{ margin-bottom:0; }
+  .product-list li::before{ content:'→'; flex-shrink:0; color: var(--deep-salmon); font-weight:700; }
+
+  .cta-row{ display:flex; flex-direction:column; align-items:flex-start; }
+  .product-card .btn{ background: var(--deep-salmon); }
+  .cta-sub{ font-size:0.82rem; color:#6a3a30; margin-top:0.6rem; }
+  .cta-secondary-text{
+    font-size:0.85rem; line-height:1.6; color:#5a3a40;
+    border-top:1px solid rgba(74,8,30,0.14); padding-top:1.2rem; margin-top:1.4rem;
+  }
+
+  .newsletter-note{
+    background: var(--burgundy-light);
+    border:1px solid rgba(255,242,235,0.15);
+    border-radius:6px;
+    padding:1.6rem 1.8rem;
+    margin-top:1.4rem;
+  }
+  .newsletter-note .label{
+    font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
+    color: var(--salmon); margin-bottom:0.5rem;
+  }
+  .newsletter-note p{ font-size:0.86rem; line-height:1.6; color: rgba(255,242,235,0.65); }
+
+  .restart-note{
+    text-align:center;
+    margin-top:2.5rem;
+  }
+
+  @media (max-width:600px){
+    .card{ padding:2.2rem 1.6rem; }
+    .result-card, .aha-card, .bottleneck-card, .product-card, .newsletter-note{ padding:1.6rem 1.5rem; }
+    .compass-row{ gap:0.7rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand-mark">
+      <span class="l1">Desk<em>R.</em></span>
+      <span class="l2">Revolution</span>
+    </div>
+  </div>
+
+  <div class="compass-wrap" id="compassWrap">
+    <div class="compass-row">
+      <div class="compass-dial">
+        <svg viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,242,235,0.2)" stroke-width="1.5"/>
+          <circle cx="20" cy="20" r="1.6" fill="#FCA27A"/>
+          <g class="compass-needle" id="compassNeedle">
+            <line x1="20" y1="20" x2="20" y2="6" stroke="#FCA27A" stroke-width="2" stroke-linecap="round"/>
+            <line x1="20" y1="20" x2="20" y2="30" stroke="rgba(255,242,235,0.35)" stroke-width="1.5" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="stations">
+        <div class="station-seg"><div class="fill" id="seg-1"></div></div>
+        <div class="station-seg"><div class="fill" id="seg-2"></div></div>
+        <div class="station-seg"><div class="fill" id="seg-3"></div></div>
+        <div class="station-seg"><div class="fill" id="seg-4"></div></div>
+        <div class="station-seg"><div class="fill" id="seg-5"></div></div>
+      </div>
+    </div>
+    <div class="station-labels" id="stationLabels">
+      <span data-st="1">Arbeitsweise</span>
+      <span data-st="2">KI-Nutzung</span>
+      <span data-st="3">Wissen</span>
+      <span data-st="4">Automatisierung</span>
+      <span data-st="5">Digitales Team</span>
+    </div>
+  </div>
+
+  <div class="stage">
+
+    <!-- SCREEN: LANDING -->
+    <section class="screen active" data-screen="landing">
+      <div class="landing">
+        <span class="eyebrow">Desk Revolution · KI-Kompass</span>
+        <h1 class="headline">Wie <em>zukunftsfit</em> ist deine Assistenzrolle?</h1>
+        <p class="sub">Finde heraus, wo du auf dem Weg von der klassischen Assistenz zur AI Chief of Staff stehst — und wo dein größter Hebel gerade wirklich liegt. Etwa fünf Minuten.</p>
+
+        <div class="path-preview">
+          <span class="path-step">KI-Neuling</span>
+          <span class="path-arrow">→</span>
+          <span class="path-step">KI-Entdeckerin</span>
+          <span class="path-arrow">→</span>
+          <span class="path-step">KI-Anwenderin</span>
+          <span class="path-arrow">→</span>
+          <span class="path-step final">AI Chief of Staff</span>
+        </div>
+
+        <button class="btn" onclick="goTo('intro')">Assessment starten →</button>
+        <p class="meta-line">15 Fragen · ca. 5 Minuten · Kostenlos</p>
+      </div>
+    </section>
+
+    <!-- SCREEN: INTRO -->
+    <section class="screen" data-screen="intro">
+      <div class="card">
+        <h2 class="card-title">Bevor es losgeht.</h2>
+        <p class="card-body">Assistenzen, die heute schon anders arbeiten, erledigen nicht einfach mehr Aufgaben. Sie arbeiten mit einem digitalen Team aus KI, Wissenssystemen und Automatisierungen zusammen.</p>
+        <p class="card-body">Dieses Assessment zeigt dir, wo du gerade stehst, was dein dominanter Engpass ist — und welcher Schritt als Nächstes wirklich etwas bringt.</p>
+        <p class="card-note">Es gibt kein richtig oder falsch. Nur deinen aktuellen Stand.</p>
+        <button class="btn" onclick="startQuestions()">Los geht's →</button>
+      </div>
+    </section>
+
+    <!-- SCREEN: QUESTION (template, filled by JS) -->
+    <section class="screen" data-screen="question">
+      <div class="q-wrap">
+        <p class="station-tag" id="qStationTag"></p>
+        <p class="station-intro-line" id="qStationIntro"></p>
+        <h2 class="q-title" id="qTitle"></h2>
+        <div class="options" id="qOptions"></div>
+        <div class="q-footer">
+          <button class="link-btn" id="qBackBtn" onclick="prevQuestion()">← Zurück</button>
+          <span class="meta-line" id="qCounter" style="margin:0;"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN: SEGMENTATION -->
+    <section class="screen" data-screen="segment">
+      <div class="q-wrap">
+        <p class="station-tag">Fast geschafft</p>
+        <h2 class="q-title">Was beschäftigt dich aktuell am meisten?</h2>
+        <p class="station-intro-line" style="margin-top:-1.4rem; margin-bottom:1.8rem;">Diese Frage zählt nicht zu deinem Ergebnis. Sie hilft mir, dir die passenden Impulse zu schicken. Wähl bis zu 3 Themen aus.</p>
+        <div class="seg-grid" id="segGrid"></div>
+        <button class="btn" id="segNextBtn" onclick="goTo('leadcapture')" disabled>Weiter →</button>
+      </div>
+    </section>
+
+    <!-- SCREEN: LEAD CAPTURE -->
+    <section class="screen" data-screen="leadcapture">
+      <div class="card">
+        <h2 class="card-title">Dein Ergebnis ist da.</h2>
+        <p class="card-body">Trag dich ein — nach der Bestätigung per E-Mail zeige ich dir, wo du stehst, was dein dominanter Engpass ist, und schicke dir passende Impulse dazu.</p>
+
+        <div class="form-row">
+          <div class="field" id="fNameWrap">
+            <label for="fName">Vorname</label>
+            <input type="text" id="fName" placeholder="Dein Vorname" autocomplete="given-name" autocapitalize="words">
+            <p class="field-error" id="fNameError">Trag bitte deinen Vornamen ein.</p>
+          </div>
+          <div class="field" id="fEmailWrap">
+            <label for="fEmail">E-Mail</label>
+            <input type="email" id="fEmail" placeholder="Deine E-Mail-Adresse" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false">
+            <p class="field-error" id="fEmailError">Das sieht noch nicht nach einer gültigen E-Mail-Adresse aus.</p>
+          </div>
+          <div class="field optional">
+            <label for="fRole">Welche Rolle beschreibt dich am besten?</label>
+            <select id="fRole">
+              <option value="">Bitte wählen</option>
+              <option>Executive Assistant</option>
+              <option>Teamassistenz</option>
+              <option>Office Manager</option>
+              <option>Virtuelle Assistenz</option>
+              <option>Selbstständig</option>
+              <option>Sonstige</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn" id="leadSubmitBtn" onclick="handleLeadSubmit()">Anmeldung abschicken →</button>
+        <p class="privacy">Ich verwende Brevo als meine E-Mail-Plattform. Mit dem Absenden stimmst du zu, dass deine Angaben gemäß der <a href="https://www.brevo.com/de/legal/privacypolicy/" target="_blank" rel="nofollow noopener" style="color:#8a6a60; text-decoration:underline;">Datenschutzerklärung von Brevo</a> übertragen werden. Du bekommst gleich eine Bestätigungsmail — erst nach dem Klick darin siehst du dein Ergebnis.</p>
+      </div>
+    </section>
+
+    <!-- SCREEN: WARTET AUF BESTÄTIGUNG -->
+    <section class="screen" data-screen="pending">
+      <div class="card" style="text-align:center;">
+        <span style="font-size:2.4rem; display:block; margin-bottom:1rem;">✉️</span>
+        <h2 class="card-title">Fast geschafft<span id="pendingName"></span>.</h2>
+        <p class="card-body">Ich hab dir gerade eine Bestätigungsmail geschickt. Erst wenn du dort auf den Link klickst, ist deine Anmeldung fest — und dein Ergebnis öffnet sich automatisch.</p>
+        <p class="card-note" style="margin-bottom:1.6rem;">Nichts im Postfach? Kurz im Spam-Ordner nachsehen — Bestätigungsmails landen dort manchmal.</p>
+        <button class="btn btn-ghost" onclick="resetAssessment()">Assessment neu starten</button>
+      </div>
+    </section>
+
+    <!-- SCREEN: BESTÄTIGT, ABER ERGEBNIS NICHT AUF DIESEM GERÄT -->
+    <section class="screen" data-screen="confirmed-elsewhere">
+      <div class="card" style="text-align:center;">
+        <span style="font-size:2.4rem; display:block; margin-bottom:1rem;">✅</span>
+        <h2 class="card-title">Anmeldung bestätigt.</h2>
+        <p class="card-body">Du bekommst „KI im Klartext" jetzt alle zwei Wochen direkt ins Postfach. Dein Kompass-Ergebnis lag nur auf dem Gerät bereit, auf dem du den Kompass ausgefüllt hast — dort öffnet es sich, wenn du von da aus auf den Bestätigungslink klickst.</p>
+        <button class="btn" onclick="resetAssessment()">Kompass neu starten</button>
+      </div>
+    </section>
+
+    <!-- Hidden: echtes Brevo-Formular, wird unsichtbar im iframe abgeschickt -->
+    <iframe name="brevo-target" id="brevo-target" style="display:none;" title="Anmeldung wird übermittelt" aria-hidden="true"></iframe>
+    <form id="brevoForm" method="POST" target="brevo-target" style="display:none;"
+          action="https://77a008e3.sibforms.com/serve/MUIFAC5qecumGpKpAawZTAgjIVcUSAqQYRnAahH5bvnx7kGiBTI8llsySePy4YX83bBtYLiSdANzAm5PF7sH1gOOGTZ86JAo-qBST6DlTMqS9rzUStXwAtN7SyxQgqj-B_hexmAWibbhHW-Nyr_JVsfHoUY7-K6fKQiYsZcSbO1JzTnIiu6Wa-jLmON_QRRNOkGy0hhydaqTtT3rQg==">
+      <input type="text" name="VORNAME" id="brevoVorname">
+      <input type="text" name="EMAIL" id="brevoEmail">
+      <input type="text" name="email_address_check" value="">
+      <input type="hidden" name="locale" value="de">
+      <input type="hidden" name="html_type" value="simple">
+    </form>
+
+    <!-- SCREEN: RESULT -->
+    <section class="screen" data-screen="result">
+      <div class="result-wrap">
+
+        <div class="confirm-banner">
+          <span class="cb-icon">✅</span>
+          <p><strong>Anmeldung bestätigt.</strong> Du bekommst „KI im Klartext" ab jetzt alle zwei Wochen direkt ins Postfach.</p>
+        </div>
+
+        <div class="result-path" id="resultPath"></div>
+        <p class="score-line" id="resultScore"></p>
+        <p class="result-eyebrow" id="resultEyebrow"></p>
+        <h2 class="result-title" id="resultTitle"></h2>
+        <p class="result-claim" id="resultClaim"></p>
+        <span class="result-focus-tag" id="resultFocusTag"></span>
+
+        <blockquote class="quote-block" id="resultKerngefuehl"></blockquote>
+
+        <div class="aha-card">
+          <p class="label">Der Moment, in dem du dich wiedererkennst</p>
+          <div id="resultAha"></div>
+        </div>
+
+        <div class="result-card">
+          <p class="label">Was du bereits richtig machst</p>
+          <ul class="strengths-list" id="resultStrengths"></ul>
+        </div>
+
+        <div class="result-card">
+          <p class="label">Die eigentliche Lücke</p>
+          <p id="resultGap"></p>
+        </div>
+
+        <div class="result-card">
+          <p class="label">Was dich das gerade kostet</p>
+          <p id="resultCost"></p>
+        </div>
+
+        <div class="result-card">
+          <p class="label">Deine Kompetenzen</p>
+          <p id="resultBarIntro" style="margin-bottom:1.4rem;"></p>
+          <div id="compRows"></div>
+        </div>
+
+        <div class="insight-grid">
+          <div class="insight-card strength">
+            <span class="ic-icon" id="strengthIcon"></span>
+            <p class="label">Deine stärkste Kompetenz</p>
+            <p class="ic-field" id="strengthField"></p>
+            <p class="ic-text" id="strengthText"></p>
+          </div>
+          <div class="insight-card lever">
+            <span class="ic-icon" id="leverIcon"></span>
+            <p class="label">Dein größter Hebel</p>
+            <p class="ic-field" id="leverField"></p>
+            <p class="ic-text" id="leverText"></p>
+          </div>
+        </div>
+
+        <div class="bottleneck-card">
+          <p class="label">Dein dominanter Engpass</p>
+          <h3 id="resultBottleneckTitle"></h3>
+          <p id="resultBottleneckText"></p>
+        </div>
+
+        <div class="result-card">
+          <p class="label">Dein nächster Entwicklungsschritt</p>
+          <p id="resultNext"></p>
+        </div>
+
+        <div class="result-card">
+          <p class="label">Sofortmaßnahme für die nächsten 7 Tage</p>
+          <p id="resultAction"></p>
+        </div>
+
+        <div class="result-card">
+          <p class="label">Dein digitales Team — heute und auf der nächsten Stufe</p>
+          <div class="split-block">
+            <p class="split-title">Heute</p>
+            <div class="split-bar" id="splitToday"></div>
+          </div>
+          <div class="split-block">
+            <p class="split-title">Auf der nächsten Stufe</p>
+            <div class="split-bar" id="splitNext"></div>
+          </div>
+          <div class="split-legend">
+            <span><i style="background:#4A081E"></i>Menschliche Arbeit</span>
+            <span><i style="background:#983D15"></i>Systeme</span>
+            <span><i style="background:#FCA27A"></i>Automatisierung</span>
+            <span><i style="background:#FEC7AF"></i>KI</span>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <p class="label">Deine Produktempfehlung</p>
+          <span class="product-position" id="productPosition"></span>
+          <h3 id="productName"></h3>
+          <p class="product-why" id="productWhy"></p>
+          <ul class="product-list" id="productList"></ul>
+          <div class="cta-row">
+            <!-- TODO: echten Ziel-Link der Verkaufsseite eintragen, sobald verfügbar -->
+            <a class="btn" id="ctaPrimaryBtn" href="#" target="_blank" rel="noopener">
+              <span id="ctaPrimaryLabel"></span> →
+            </a>
+            <p class="cta-sub" id="ctaPrimarySub"></p>
+          </div>
+          <p class="cta-secondary-text" id="ctaSecondaryText"></p>
+        </div>
+
+        <div class="newsletter-note">
+          <p class="label">Und in der Zwischenzeit</p>
+          <p>„KI im Klartext" landet ab jetzt alle zwei Wochen in deinem Postfach — mit Impulsen, die genau zu deinem aktuellen Stand passen. Kein Druck, kein Tool-Hype. Nur der nächste sinnvolle Schritt.</p>
+        </div>
+
+        <p class="restart-note">
+          <button class="link-btn" onclick="resetAssessment()">Assessment neu starten</button>
+        </p>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+  // ── DATA ──
+  const stations = [
+    { id:1, label:'Arbeitsweise', intro:'Bevor es um KI geht: ein Blick auf deine heutige Arbeitsweise.' },
+    { id:2, label:'KI-Nutzung', intro:'Wie stark ist KI schon Teil deines Alltags?' },
+    { id:3, label:'Wissen', intro:'Wissen ist das Fundament jedes digitalen Teams.' },
+    { id:4, label:'Automatisierung', intro:'Wo entstehen bei dir schon digitale Teams — durch Systeme statt durch dich allein?' },
+    { id:5, label:'Digitales Team', intro:'Zum Schluss: ein Blick nach vorn.' },
+  ];
+
+  const questions = [
+    // Station 1 — Arbeitsweise
+    { station:1, text:'Wenn eine neue Aufgabe auf deinem Tisch landet — wie gehst du typischerweise vor?', options:[
+      'Ich mache sie einfach, so wie ich sie schon immer gemacht habe.',
+      'Ich überlege kurz, ob es einen schnelleren Weg gibt — meistens bleibt aber keine Zeit dafür.',
+      'Ich frage mich regelmäßig, ob mir ein Tool oder ein Prozess Arbeit abnehmen könnte.',
+      'Ich prüfe zuerst, ob ich die Aufgabe an ein System oder einen digitalen Helfer übergeben kann.'
+    ]},
+    { station:1, text:'Wie sehen deine wiederkehrenden Aufgaben aus?', options:[
+      'Ich mache sie jedes Mal neu, aus dem Kopf.',
+      'Ich habe ein paar Notizen, aber keine echte Struktur.',
+      'Ich habe für die wichtigsten einen festen Ablauf, den ich jedes Mal nutze.',
+      'Ich habe dokumentierte Prozesse, die auch andere — oder KI — übernehmen könnten.'
+    ]},
+    { station:1, text:'Wenn du zwei Wochen ausfällst — wie gut käme jemand anderes durch deinen Job?', options:[
+      'Kaum. Vieles steckt nur in meinem Kopf.',
+      'Es gäbe größere Lücken, aber die Basics wären da.',
+      'Ganz gut — das meiste ist irgendwo notiert.',
+      'Sehr gut. Es gibt klare Unterlagen für fast alles.'
+    ]},
+    // Station 2 — KI-Nutzung
+    { station:2, text:'Wie oft nutzt du KI-Tools wie Claude oder ChatGPT aktuell in deinem Arbeitsalltag?', options:[
+      'Gar nicht oder fast nie.',
+      'Gelegentlich, wenn ich dran denke.',
+      'Mehrmals pro Woche, für bestimmte Aufgaben.',
+      'Täglich, für einen festen Teil meiner Arbeit.'
+    ]},
+    { station:2, text:'Wie sicher fühlst du dich im Umgang mit KI-Tools?', options:[
+      'Unsicher — ich weiß nicht recht, wo ich anfangen soll.',
+      'Ich traue mich an einfache Dinge, mehr nicht.',
+      'Ich probiere viel aus und finde meistens einen Weg.',
+      'Ich nutze KI gezielt und weiß, was funktioniert und was nicht.'
+    ]},
+    { station:2, text:'Für wie viele verschiedene Aufgabenbereiche nutzt du KI bereits?', options:[
+      'Für keinen.',
+      'Für einen einzigen — zum Beispiel nur E-Mails.',
+      'Für mehrere — E-Mails, Recherche, Protokolle.',
+      'Für die meisten Bereiche meiner Arbeit. Es ist Teil meines Alltags.'
+    ]},
+    // Station 3 — Wissensmanagement
+    { station:3, text:'Wo liegt dein Arbeitswissen — Vorlagen, Kontakte, Abläufe?', options:[
+      'Verteilt über E-Mails, Zettel und meinen Kopf.',
+      'In mehreren Ordnern, aber ohne echtes System.',
+      'In einer zentralen Ablage, die einigermaßen aufgeräumt ist.',
+      'In einem zentralen System, das durchsuchbar und aktuell gehalten wird.'
+    ]},
+    { station:3, text:'Wie lange brauchst du, um eine wichtige Information von vor drei Monaten wiederzufinden?', options:[
+      'Das dauert oft ewig — oder ich finde sie gar nicht mehr.',
+      'Ein paar Minuten Suchen gehören dazu.',
+      'Meistens finde ich es zügig.',
+      'Sekunden. Ich weiß genau, wo ich suchen muss.'
+    ]},
+    { station:3, text:'Wie gehst du mit neuem Wissen um — zum Beispiel aus einem Meeting oder einer Recherche?', options:[
+      'Es bleibt meist nur in meinem Kopf.',
+      'Ich mache mir Notizen, sortiere sie aber selten.',
+      'Ich halte es fest und lege es an einen festen Ort.',
+      'Es fließt in ein System, auf das ich — oder KI — später zugreifen kann.'
+    ]},
+    // Station 4 — Automatisierung
+    { station:4, text:'Wie viele deiner wiederkehrenden Aufgaben laufen bereits automatisiert oder mit KI-Unterstützung ab?', options:[
+      'Keine.',
+      'Eine, vielleicht zwei.',
+      'Mehrere feste Abläufe.',
+      'Ein großer Teil — ich baue das bewusst weiter aus.'
+    ]},
+    { station:4, text:'Wie gehst du mit Aufgaben um, die dir eigentlich nicht guttun oder zu viel Zeit fressen?', options:[
+      'Ich mache sie trotzdem selbst. Es geht nicht anders.',
+      'Ich beschwere mich manchmal, ändere aber wenig.',
+      'Ich überlege bewusst, wie ich sie loswerden oder vereinfachen kann.',
+      'Ich delegiere sie aktiv — an Menschen oder an digitale Helfer.'
+    ]},
+    { station:4, text:'Wenn ein Prozess zum dritten Mal in gleicher Form auftaucht — was passiert dann bei dir?', options:[
+      'Nichts. Ich mach ihn einfach wieder manuell.',
+      'Ich denke mir, dass ich das mal systematisieren sollte — irgendwann.',
+      'Ich baue mir eine Vorlage oder Checkliste dafür.',
+      'Ich baue ihn in ein System oder eine Automatisierung ein.'
+    ]},
+    // Station 5 — Digitales Team
+    { station:5, text:'Wie würdest du deine Rolle in einem Jahr am liebsten beschreiben?', options:[
+      'Genau wie heute — ich erledige, was anfällt.',
+      'Etwas entlasteter, aber im Kern gleich.',
+      'Ich steuere mehr, als dass ich selbst ausführe.',
+      'Ich orchestriere ein digitales Team aus KI, Systemen und Menschen.'
+    ]},
+    { station:5, text:'Wie denkst du über die Zusammenarbeit mit KI-Tools?', options:[
+      'Als Bedrohung für meinen Job.',
+      'Als nettes Extra, aber nicht wirklich relevant für mich.',
+      'Als Werkzeug, das mir hilft, mehr zu schaffen.',
+      'Als Teil meines Teams, mit dem ich zusammenarbeite.'
+    ]},
+    { station:5, text:'Was beschreibt dein Selbstverständnis als Assistenz heute am besten?', options:[
+      'Ich erledige, was mir aufgetragen wird.',
+      'Ich denke mit, aber die Entscheidungen liegen woanders.',
+      'Ich gestalte meinen Bereich aktiv mit.',
+      'Ich verstehe mich als Steuerzentrale — für Menschen und KI gleichermaßen.'
+    ]},
+  ];
+
+  const segmentOptions = ['E-Mail-Management','Meetings','Kommunikation','Recherche','Dokumente','Priorisierung','Zeitmanagement','Wissensmanagement','Automatisierung','Aufbau eines digitalen Teams','Sonstiges'];
+
+  const stagePath = ['KI-Neuling','KI-Entdeckerin','KI-Anwenderin','AI Chief of Staff'];
+
+  // Sprechende Bezeichnung je Kompetenzfeld — wird mit dem individuell schwächsten
+  // Feld kombiniert zu "Du bist {Stufe} mit Schwerpunkt {Engpass}".
+  const engpassLabels = ['Struktur & Wiederholbarkeit','KI-Gewohnheit','Wissensmanagement','Automatisierung & Delegation','Rollenklarheit'];
+
+  // Stufenspezifischer Zusatzsatz für den dominanten Engpass — macht aus dem
+  // generischen Hebel-Text eine Aussage, die zur jeweiligen Entwicklungsphase passt.
+  const bottleneckHints = [
+    'Das ist bei KI-Neulingen völlig normal — genau hier liegt dein größter Sprung nach vorn.',
+    'Typische Entdeckerinnen-Bremse: einzelne gute Ergebnisse, aber noch kein wiederholbarer Ablauf.',
+    'Typische Anwenderinnen-Bremse: Du bist schon schnell — aber dieser Bereich hängt noch zu sehr an dir allein.',
+    'Das ist der Bereich, der dein gesamtes System aktuell noch bremst — dein nächster strategischer Hebel.'
+  ];
+
+  // Texte je Kompetenzfeld — werden dynamisch dem Feld zugeordnet, das bei der jeweiligen
+  // Person am höchsten (Stärke) bzw. am niedrigsten (Hebel) ausfällt. So ist jedes Ergebnis
+  // wirklich individuell statt nur nach Stufe generisch.
+  const stationInsights = [
+    { icon:'🧭', strength:'Du denkst in Prozessen, nicht nur in Aufgaben. Diese Klarheit ist die Basis für alles, was danach kommt.',
+      lever:'Hier verschenkst du noch Zeit: Wiederkehrende Aufgaben laufen bislang eher aus dem Bauch heraus als nach System.' },
+    { icon:'⚡', strength:'Du hast dir den Umgang mit KI bereits angeeignet — nicht als Spielerei, sondern als festen Teil deiner Arbeit.',
+      lever:'Hier liegt aktuell dein größter Sprung: KI ist noch mehr Ausnahme als Gewohnheit in deinem Alltag.' },
+    { icon:'🧠', strength:'Du dokumentierst und strukturierst Wissen bereits deutlich besser als die meisten Assistenzen. Das ist die Grundlage jedes digitalen Teams.',
+      lever:'Hier verschenkst du aktuell am meisten: Dein Wissen liegt noch verteilt statt an einem zentralen, durchsuchbaren Ort.' },
+    { icon:'⚙️', strength:'Du erkennst wiederkehrende Muster und baust sie bewusst in Systeme statt in reine Handarbeit.',
+      lever:'Hier liegt dein größter Hebel: Viele Aufgaben laufen noch manuell, obwohl sie sich standardisieren oder automatisieren ließen.' },
+    { icon:'🤝', strength:'Du denkst bereits in Rollen und Zusammenarbeit statt in Einzelaufgaben — genau das macht eine Orchestratorin aus.',
+      lever:'Hier ist noch Luft: Du erledigst vieles noch allein, statt es an Systeme oder KI zu übergeben.' },
+  ];
+
+  const results = [
+    {
+      min:0, max:11, stageIndex:0, name:'KI-Neuling',
+      eyebrow:'Dein Ergebnis',
+      title:'Du bist KI-Neuling. Gut. Dann überspringen wir den Tool-Lärm.',
+      claim:'Dein Einstieg beginnt nicht mit 20 neuen Apps. Er beginnt mit einem klaren Arbeitsbereich, in dem KI dich sofort entlastet.',
+      kerngefuehl:'„Ich weiß, dass KI wichtig ist. Aber ich weiß nicht, wo ich anfangen soll.“',
+      aha:[
+        'Du gehörst nicht zu den Assistenzen, die KI grundsätzlich ablehnen. Du gehörst eher zu denen, die immer wieder denken: „Ich müsste mich damit eigentlich mal beschäftigen.“',
+        'Vielleicht speicherst du dir LinkedIn-Beiträge über KI ab. Vielleicht hörst du aufmerksam zu, wenn Kolleginnen davon erzählen. Vielleicht hast du ChatGPT oder Copilot sogar schon einmal geöffnet — vielleicht sogar einen Prompt ausprobiert.',
+        'Aber dann kommt dein Alltag dazwischen. Eine E-Mail. Ein Termin. Eine spontane Rückfrage. Ein Meeting, das noch vorbereitet werden muss. Eine Aufgabe, die eigentlich schon gestern fertig sein sollte. Und plötzlich ist KI wieder ein Thema für später.',
+        'Nicht, weil dir Interesse fehlt. Nicht, weil du es nicht könntest. Sondern weil dir ein klarer, sicherer Startpunkt fehlt.'
+      ],
+      strengths:[
+        'Du beobachtest, statt blind irgendeinem Tool hinterherzurennen.',
+        'Du bist offen und merkst, dass sich Assistenzarbeit gerade verändert.',
+        'Du willst verstehen, was in deinem Alltag wirklich hilft — nicht, was gerade gehypt wird.'
+      ],
+      gapText:'Es fehlt dir nicht Motivation. Es fehlt Orientierung. Du weißt noch nicht, womit du anfangen sollst, welche Aufgaben sich eignen, wie du KI praktisch testest und wo der Nutzen in deinem Assistenzalltag wirklich spürbar wird. Du brauchst gerade keine große KI-Strategie. Du brauchst eine Einstiegstreppe.',
+      costText:'Solange KI für dich ein Beobachtungsthema bleibt, entsteht keine echte Entlastung. Dein Postfach bleibt dein Postfach. Meetings bleiben Meetings. Nachfragen bleiben Nachfragen. Suchzeiten bleiben Suchzeiten. Und dein Kopf bleibt weiterhin der zentrale Speicher für alles, was in deinem Job passiert. Du arbeitest weiter wie bisher — obwohl erste Entlastung schon diese Woche möglich wäre.',
+      barIntro:'Deine Balken zeigen keinen Mangel. Sie zeigen, dass du noch keinen festen Einstiegspunkt hast — bei den meisten Neulingen liegen sie eher niedrig und dicht beieinander. Ein Ausreißer nach oben ist kein Zufall: Das ist dein natürliches Startthema. Ein besonders niedriger Balken ist nicht dein Defizit. Das ist dein erster Hebel.',
+      nextLabel:'KI-Entdeckerin',
+      nextFocus:'Der Fokus: KI zur täglichen Gewohnheit machen, nicht zur Ausnahme.',
+      action:'Wähl eine einzige wiederkehrende Aufgabe — eine E-Mail-Vorlage, eine Zusammenfassung, eine Recherche. Erledige sie diese Woche jedes Mal mit KI. Nur diese eine Gewohnheit. Mehr nicht.',
+      product:{
+        position:'Deine Einstiegsbrücke',
+        name:'Cowork-Kompass für Assistenzen',
+        why:'Du brauchst gerade keine große Systemarchitektur. Du brauchst Orientierung, drei Quick Wins und eine erste Rollenidee — genau das liefert der Cowork-Kompass. Workshop 2 oder das Premium-System wären an dieser Stelle zu groß und zu früh.',
+        bullets:[
+          'Welche Cowork-Kategorien für deinen Alltag wirklich relevant sind',
+          'Wie du mit einem Daily Briefing startest',
+          'Wie du Meetings besser vorbereitest und nachhältst',
+          'Wie du E-Mails und Teams-Nachrichten sauber triagierst',
+          'Wo Cowork endet — und welche erste KI-Rolle dich wirklich entlasten könnte'
+        ],
+        ctaPrimaryLabel:'Starte mit dem Cowork-Kompass',
+        ctaPrimarySub:'Orientierung, drei Quick Wins und deine erste Rollenidee.',
+        ctaSecondaryText:'Noch nicht bereit für den nächsten Schritt? „KI im Klartext“ landet ab jetzt alle zwei Wochen in deinem Postfach — mit Impulsen, die dir schon vor dem Workshop weiterhelfen.',
+        ctaHref:'#'
+      },
+      teamToday:[90,5,3,2], teamNext:[75,10,5,10]
+    },
+    {
+      min:12, max:22, stageIndex:1, name:'KI-Entdeckerin',
+      eyebrow:'Dein Ergebnis',
+      title:'Du bist KI-Entdeckerin. Du hast die ersten Beweise. Jetzt fehlt dir das System.',
+      claim:'Du nutzt KI schon. Aber solange jeder Einsatz wieder bei null beginnt, bleibt Entlastung Zufall.',
+      kerngefuehl:'„Ich nutze KI schon manchmal. Aber es fühlt sich noch zufällig an.“',
+      aha:[
+        'Du hast die erste Schwelle überschritten. KI ist für dich kein Fremdwort mehr.',
+        'Du hast wahrscheinlich schon Texte formulieren lassen, eine E-Mail verbessert, dir etwas zusammenfassen lassen oder eine Recherche angestoßen. Vielleicht hattest du sogar einen richtig guten Moment, in dem du dachtest: „Okay. Das spart mir wirklich Zeit.“',
+        'Aber dann passiert etwas Typisches: Beim nächsten Mal fängst du wieder bei null an. Du weißt noch ungefähr, dass es funktioniert hat — aber nicht mehr genau, wie du gefragt hast. Der gute Prompt liegt irgendwo. Das Ergebnis war gut, aber nicht wiederholbar.',
+        'Deshalb fühlt sich dein Fortschritt kleiner an, als er wirklich ist. Du bist nicht mehr am Anfang. Aber du hast noch kein System.'
+      ],
+      strengths:[
+        'Du probierst aus und sammelst echte Erfahrungen, statt nur zuzusehen.',
+        'Du erkennst erste Anwendungsfälle in deinem eigenen Alltag.',
+        'Du hast verstanden, dass KI im Assistenzalltag wirklich funktionieren kann.'
+      ],
+      gapText:'Dir fehlt Wiederholbarkeit. Du hast einzelne gute Ergebnisse — aber noch keine Routinen. Noch keine sortierten Prompts. Noch keine klaren Rollen. Noch keine festen Qualitätsregeln. Noch keine Struktur, die dir morgen wieder hilft.',
+      costText:'Du sparst bereits punktuell Zeit. Aber du baust noch keine echte Entlastung auf. KI hilft dir bei Aufgaben — aber sie trägt noch keinen Arbeitsbereich mit. Du arbeitest zwischendurch schneller, aber deine Arbeitsweise verändert sich noch nicht grundsätzlich. Das ist die typische Entdeckerinnen-Falle: Du hast Beweise, dass KI nützlich ist. Aber du hast noch kein Modell, mit dem du diesen Nutzen zuverlässig wiederholst.',
+      barIntro:'Deine Balken zeigen bereits erste Inseln — meist einen oder zwei deutliche Ausschläge nach oben. Jetzt geht es darum, daraus eine Landkarte zu machen. Ein hoher Balken ist dein Beweisbereich: Dort hast du schon gesehen, dass KI funktioniert. Ein niedriger Balken ist nicht der Bereich, den du sofort perfektionieren musst — er zeigt dir nur, wo dir noch System fehlt.',
+      nextLabel:'KI-Anwenderin',
+      nextFocus:'Der Fokus: aus einzelnen KI-Tests klare digitale Rollen bauen.',
+      action:'Leg dir einen zentralen Ort für deine besten Prompts und Ergebnisse an. Starte mit drei Dingen: ein Prompt, der gut funktioniert hat, eine Vorlage, eine wichtige Information. Ein Wissenssystem bringt dich gerade weiter als zehn neue Prompts.',
+      product:{
+        position:'Deine Transformation',
+        name:'Baue dein digitales Assistenzteam (Workshop 2)',
+        why:'Du brauchst nicht mehr nur Orientierung — die hast du schon. Du brauchst die Übersetzung von Einzelaufgaben in Rollen. Genau das ist Workshop 2: Du designst KI-Mitarbeiter mit klaren Aufgaben, Grenzen und Qualitätsregeln, statt bei jedem Prompt wieder bei null anzufangen.',
+        bullets:[
+          'Welche Rolle deine KI in einem bestimmten Arbeitsbereich übernimmt',
+          'Welche Aufgaben konkret dazugehören — und welche nicht',
+          'Welche Grenzen und Informationen die Rolle braucht',
+          'Welche Qualitätsregeln gelten, bevor du ein Ergebnis freigibst',
+          'Wann du eingreifst und wann die Rolle selbstständig arbeitet'
+        ],
+        ctaPrimaryLabel:'Baue dein digitales Assistenzteam',
+        ctaPrimarySub:'Aus einzelnen KI-Tests werden klare digitale Rollen.',
+        ctaSecondaryText:'Brauchst du vorher noch mehr Orientierung? Dann starte mit dem Cowork-Kompass — er zeigt dir zuerst, wo Cowork dir im Alltag am meisten bringt.',
+        ctaHref:'#'
+      },
+      teamToday:[75,10,5,10], teamNext:[55,20,12,13]
+    },
+    {
+      min:23, max:34, stageIndex:2, name:'KI-Anwenderin',
+      eyebrow:'Dein Ergebnis',
+      title:'Du bist KI-Anwenderin. KI hilft dir schon. Aber sie arbeitet noch nicht wirklich mit.',
+      claim:'Du hast viele gute Einzelwerkzeuge. Jetzt brauchst du ein System, das nicht jedes Mal bei dir beginnt.',
+      kerngefuehl:'„Ich nutze KI aktiv. Aber am Ende hängt trotzdem noch alles an mir.“',
+      aha:[
+        'Du gehörst zu den Assistenzen, die KI bereits praktisch nutzen. Du kennst gute Prompts, weißt, wann KI dir helfen kann, und nutzt sie für Texte, Meetings, Recherchen, Zusammenfassungen oder Struktur. Vielleicht hast du sogar schon kleine Workflows gebaut.',
+        'Viele Kolleginnen würden dich wahrscheinlich als fortgeschritten einschätzen.',
+        'Und trotzdem gibt es ein Muster, das du wahrscheinlich kennst: KI hilft dir — aber sie ersetzt noch keine Struktur. Du hast viele gute Einzelideen, viele kleine Lösungen, viele Momente, in denen du schneller bist. Aber du bist immer noch die zentrale Schnittstelle: Du stößt an, du prüfst, du sortierst, du entscheidest, du erinnerst, du hältst nach, du erklärst.',
+        'KI spart dir Zeit. Aber sie skaliert dich noch nicht.'
+      ],
+      strengths:[
+        'Du nutzt KI nicht mehr theoretisch — sie ist längst in deinem Alltag integriert.',
+        'Du erkennst zuverlässig, welche Aufgaben KI unterstützen kann.',
+        'Du hast eine höhere Umsetzungsreife als viele andere Assistenzen.'
+      ],
+      gapText:'Dein Wissen ist noch nicht sauber in Rollen organisiert. Du hast KI-Nutzung — aber noch kein digitales Assistenzteam. Du hast Unterstützung — aber noch keine Arbeitsbereiche, die systemisch mitgetragen werden.',
+      costText:'Wenn du eine Woche ausfällst, verschwindet ein großer Teil deiner Arbeitslogik immer noch mit dir. Nicht, weil du schlecht arbeitest — sondern weil dein System noch in deinem Kopf liegt. Das ist die Anwenderinnen-Falle: Du bist bereits schnell. Aber du bist noch nicht entlastet genug.',
+      barIntro:'Bei dir sind wahrscheinlich mehrere Balken mittel bis hoch — das heißt nicht, dass du schon fertig bist. Deine Balken zeigen Aktivität. Jetzt geht es um Architektur: Wenn viele Balken hoch sind, hast du viele gute Einzelbereiche — der nächste Schritt ist, daraus ein Betriebssystem zu machen. Ein unterdurchschnittlicher Balken zeigt hier meist nicht fehlendes Können, sondern fehlende Einbindung ins Gesamtsystem.',
+      nextLabel:'AI Chief of Staff',
+      nextFocus:'Der Fokus: Rollenarchitektur — deine Einzelwerkzeuge zu einem digitalen Team verbinden, das auch ohne dich weiterläuft.',
+      action:'Nimm dir drei Aufgaben vor, die du immer noch komplett selbst machst, obwohl KI dabei helfen könnte. Frag bei jeder: Lässt sie sich standardisieren? Automatisieren? An eine feste KI-Rolle übergeben? Schreib die Antworten auf.',
+      product:{
+        position:'Deine Transformation',
+        name:'Baue dein digitales Assistenzteam (Workshop 2)',
+        why:'Du nutzt KI bereits — jetzt machst du aus Nutzung ein System. Workshop 2 hilft dir, aus einzelnen KI-Helfern echte digitale Rollen zu bauen: Inbox Manager, Meeting Chief, Daily Briefing Agent, Follow-up Manager, Knowledge Manager, Calendar Defender, Research Analyst.',
+        bullets:[
+          'Inbox Manager — deine E-Mail-Triage läuft nach festen Regeln',
+          'Meeting Chief — Vorbereitung und Nachhalten laufen mit',
+          'Knowledge Manager — dein Wissen liegt nicht mehr nur in deinem Kopf',
+          'Follow-up Manager — nichts fällt mehr durchs Raster',
+          'Calendar Defender & Research Analyst — je nachdem, wo dein Alltag es am meisten braucht'
+        ],
+        ctaPrimaryLabel:'Baue dein digitales Assistenzteam',
+        ctaPrimarySub:'Mach aus KI-Nutzung ein System, das dich wirklich entlastet.',
+        ctaSecondaryText:'Baust du bereits mehrere Rollen und Wissensbereiche gleichzeitig auf? Dann prüfe direkt das AI Chief of Staff System.',
+        ctaHref:'#'
+      },
+      teamToday:[55,20,12,13], teamNext:[35,25,20,20]
+    },
+    {
+      min:35, max:45, stageIndex:3, name:'AI Chief of Staff',
+      eyebrow:'Dein Ergebnis',
+      title:'Du bist auf dem Weg zum AI Chief of Staff. Dein nächster Hebel ist nicht mehr ein Prompt. Es ist dein System.',
+      claim:'Du siehst bereits, was möglich ist. Jetzt brauchst du ein Betriebsmodell, das diese Möglichkeiten tragfähig macht.',
+      kerngefuehl:'„Ich denke bereits in Systemen. Mein Engpass ist nicht Wissen. Mein Engpass ist Skalierung.“',
+      aha:[
+        'Du nutzt KI längst nicht mehr nur für einzelne Aufgaben. Du denkst in Rollen, Arbeitsbereichen, Wissen, Übergaben, Standards, Automatisierung und Qualität.',
+        'Du hast verstanden: Der große Hebel liegt nicht im nächsten besseren Prompt. Der große Hebel liegt in der Struktur, die darunterliegt.',
+        'Wahrscheinlich bist du oft die Person, die anderen zeigt, was möglich ist. Du erkennst Potenziale in Prozessen, bevor andere überhaupt merken, dass dort ein Problem liegt. Du siehst sofort: Das könnte ein Agent übernehmen. Das müsste dokumentiert werden. Das braucht eine Regel. Das sollte nicht jedes Mal neu entschieden werden.',
+        'Aber genau dadurch entsteht dein nächster Engpass: Du siehst zu viel. Und du kannst nicht alles gleichzeitig bauen.'
+      ],
+      strengths:[
+        'Du denkst nicht mehr nur in Aufgaben, sondern in Systemen.',
+        'Du erkennst Muster — und die Rolle von Wissen, Prozessen und Verantwortlichkeiten darin.',
+        'Du hast eine klare Vorstellung davon, wie Assistenzarbeit strategischer werden kann.'
+      ],
+      gapText:'Dir fehlt kein Einstieg. Dir fehlt ein vollständiges Betriebsmodell. Du brauchst keine Sammlung von Ideen. Du brauchst ein System, in dem Rollen, Wissen, Regeln und Automatisierung zusammenspielen.',
+      costText:'Dein Potenzial bleibt teilweise ungenutzt, weil zu viel noch parallel entsteht. Du siehst die nächsten zehn Schritte — aber ohne klare Architektur werden daraus schnell zehn Baustellen. Das ist die Chief-of-Staff-Falle: Du bist weit genug, um das ganze System zu sehen. Aber genau deshalb brauchst du jetzt Struktur auf Premium-Niveau.',
+      barIntro:'Bei dir sind wahrscheinlich viele Balken hoch — das ist hier keine Anfängerreise mehr, sondern ein System im Aufbau. Wenn alle Balken hoch sind, liegt dein nächster Hebel nicht in mehr KI-Nutzung, sondern in Standardisierung und Skalierung. Ein auffällig niedrigerer Balken ist hier kein Schwachpunkt — er zeigt den Bereich, der dein gesamtes System aktuell noch bremst.',
+      nextLabel:'Vordenkerin der Assistenzrolle',
+      nextFocus:'Der nächste Schritt ist nicht mehr technisch. Er ist strategisch: deine Wirkung vervielfachen, statt selbst mehr zu erledigen.',
+      action:'Dokumentiere dein digitales Team so, wie es heute wirklich aussieht: Welche Systeme arbeiten für dich? Welche Automatisierungen laufen? Was übernimmt KI, was noch du? Daraus siehst du sofort, wo als Nächstes noch Potenzial liegt.',
+      product:{
+        position:'Premium',
+        name:'AI Chief of Staff System',
+        why:'Du bist über die Einstiegsbrücke hinaus — in vielen Fällen auch über die reine Rollenlogik hinaus. Du brauchst die vollständige Architektur: Rollen, Wissenssysteme, Automatisierungen, Betriebsmodell, Qualitätsregeln und eine strategische Positionierung, die dein System tatsächlich trägt.',
+        bullets:[
+          'Vollständige Rollenarchitektur für dein digitales Team',
+          'Ein Wissenssystem, das mitwächst statt zu veralten',
+          'Automatisierungen, die wiederkehrende Entscheidungen abnehmen',
+          'Ein Betriebsmodell für Mensch-KI-Zusammenarbeit',
+          'Qualitätsregeln und eine skalierbare Arbeitsweise'
+        ],
+        ctaPrimaryLabel:'Prüfe das AI Chief of Staff System',
+        ctaPrimarySub:'Baue dein vollständiges Betriebsmodell für Mensch-KI-Zusammenarbeit.',
+        ctaSecondaryText:'Willst du zuerst eine einzelne Rolle sauber designen? Dann starte mit Workshop 2 — Baue dein digitales Assistenzteam.',
+        ctaHref:'#'
+      },
+      teamToday:[35,25,20,20], teamNext:[20,30,25,25]
+    },
+  ];
+
+  // ── STATE ──
+  let currentQ = 0;
+  const answers = new Array(questions.length).fill(null);
+  let segmentChoice = [];
+
+  // ── NAVIGATION ──
+  function goTo(name){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelector('.screen[data-screen="' + name + '"]').classList.add('active');
+    document.getElementById('compassWrap').classList.toggle('show', name === 'question');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function startQuestions(){
+    currentQ = 0;
+    goTo('question');
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    const q = questions[currentQ];
+    const st = stations[q.station - 1];
+
+    document.getElementById('qStationTag').textContent = 'Station ' + q.station + ' von 5 · ' + st.label;
+    const isFirstOfStation = currentQ === 0 || questions[currentQ-1].station !== q.station;
+    document.getElementById('qStationIntro').textContent = isFirstOfStation ? st.intro : '';
+    document.getElementById('qStationIntro').style.display = isFirstOfStation ? 'block' : 'none';
+    document.getElementById('qTitle').textContent = q.text;
+    document.getElementById('qCounter').textContent = 'Frage ' + (currentQ+1) + ' / ' + questions.length;
+    document.getElementById('qBackBtn').style.visibility = currentQ === 0 ? 'hidden' : 'visible';
+
+    const optsWrap = document.getElementById('qOptions');
+    optsWrap.innerHTML = '';
+    const letters = ['A','B','C','D'];
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.innerHTML = '<span class="letter">' + letters[i] + '</span><span class="opt-text">' + opt + '</span>';
+      btn.onclick = () => selectAnswer(i);
+      optsWrap.appendChild(btn);
+    });
+
+    updateProgress();
+  }
+
+  function selectAnswer(points){
+    answers[currentQ] = points;
+    if(currentQ < questions.length - 1){
+      currentQ++;
+      renderQuestion();
+    } else {
+      renderSegmentGrid();
+      goTo('segment');
+    }
+  }
+
+  function prevQuestion(){
+    if(currentQ > 0){
+      currentQ--;
+      renderQuestion();
+    }
+  }
+
+  function updateProgress(){
+    const q = questions[currentQ];
+    for(let s = 1; s <= 5; s++){
+      const seg = document.getElementById('seg-' + s);
+      const label = document.querySelector('.station-labels span[data-st="' + s + '"]');
+      if(s < q.station){
+        seg.style.right = '0%';
+        label.classList.add('done'); label.classList.remove('active');
+      } else if(s === q.station){
+        const inStationIndex = questions.filter((qq,idx) => qq.station === s && idx <= currentQ).length;
+        const stationTotal = questions.filter(qq => qq.station === s).length;
+        seg.style.right = (100 - (inStationIndex-1)/stationTotal*100) + '%';
+        label.classList.add('active'); label.classList.remove('done');
+      } else {
+        seg.style.right = '100%';
+        label.classList.remove('active','done');
+      }
+    }
+    const overallPct = (currentQ) / questions.length;
+    const needle = document.getElementById('compassNeedle');
+    needle.style.transform = 'rotate(' + (overallPct * 360) + 'deg)';
+  }
+
+  const MAX_SEGMENT_CHOICES = 3;
+
+  function renderSegmentGrid(){
+    const grid = document.getElementById('segGrid');
+    grid.innerHTML = '';
+    segmentOptions.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'seg-opt';
+      btn.textContent = opt;
+      btn.onclick = () => {
+        const idx = segmentChoice.indexOf(opt);
+        if(idx > -1){
+          segmentChoice.splice(idx, 1);
+          btn.classList.remove('selected');
+        } else {
+          if(segmentChoice.length >= MAX_SEGMENT_CHOICES){
+            // Kurzes visuelles Feedback statt stumm nichts zu tun
+            btn.animate([{ transform:'translateX(0)' },{ transform:'translateX(-4px)' },{ transform:'translateX(4px)' },{ transform:'translateX(0)' }], { duration:200 });
+            return;
+          }
+          segmentChoice.push(opt);
+          btn.classList.add('selected');
+        }
+        document.getElementById('segNextBtn').disabled = segmentChoice.length === 0;
+      };
+      grid.appendChild(btn);
+    });
+  }
+
+  function computeResult(){
+    const score = answers.reduce((sum, a) => sum + (a || 0), 0);
+    return { score, band: results.find(r => score >= r.min && score <= r.max) || results[0] };
+  }
+
+  function isValidEmail(value){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  function setFieldError(wrapId, hasError){
+    document.getElementById(wrapId).classList.toggle('has-error', hasError);
+  }
+
+  // Schickt Vorname + E-Mail unsichtbar an das echte Brevo-Formular (Double-Opt-in-Liste "KI-Kompass").
+  // Läuft über einen versteckten iframe, damit niemand von der Seite wegnavigiert wird.
+  function submitToBrevo(firstName, email){
+    document.getElementById('brevoVorname').value = firstName;
+    document.getElementById('brevoEmail').value = email;
+    document.getElementById('brevoForm').submit();
+  }
+
+  const PENDING_KEY = 'deskr_ki_kompass_pending_v1';
+
+  function handleLeadSubmit(){
+    const name = document.getElementById('fName').value.trim();
+    const email = document.getElementById('fEmail').value.trim();
+
+    const nameOk = name.length > 0;
+    const emailOk = isValidEmail(email);
+
+    setFieldError('fNameWrap', !nameOk);
+    setFieldError('fEmailWrap', !emailOk);
+
+    if(!nameOk || !emailOk){
+      if(!nameOk){ document.getElementById('fName').focus(); }
+      else { document.getElementById('fEmail').focus(); }
+      return; // Kein Ergebnis ohne gültige Angaben — das ist Absicht.
+    }
+
+    const btn = document.getElementById('leadSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Wird gesendet …';
+
+    // Ergebnis wird NICHT sofort gezeigt — nur lokal auf diesem Gerät zwischengespeichert.
+    // Es wird erst freigeschaltet, wenn Brevo die Person nach dem Bestätigungsklick
+    // mit "?confirmed=1" auf diese Seite zurückschickt (siehe checkConfirmationReturn()).
+    try{
+      localStorage.setItem(PENDING_KEY, JSON.stringify({
+        firstName: name,
+        email: email,
+        answers: answers,
+        segmentChoice: segmentChoice,
+        ts: Date.now()
+      }));
+    }catch(e){
+      // localStorage kann in seltenen Fällen blockiert sein (z. B. strikter privater Modus).
+      // Das Ergebnis lässt sich dann später nicht automatisch laden — die Anmeldung selbst
+      // funktioniert trotzdem, da sie direkt an Brevo geht.
+    }
+
+    submitToBrevo(name, email);
+
+    document.getElementById('pendingName').textContent = ', ' + name;
+    goTo('pending');
+
+    btn.disabled = false;
+    btn.textContent = 'Anmeldung abschicken →';
+  }
+
+  // Läuft beim Laden der Seite: prüft, ob Brevo die Person gerade nach dem
+  // Bestätigungsklick zurückgeschickt hat, und schaltet dann das Ergebnis frei.
+  function checkConfirmationReturn(){
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('confirmed') !== '1'){ return; }
+
+    let pending = null;
+    try{
+      const raw = localStorage.getItem(PENDING_KEY);
+      if(raw){ pending = JSON.parse(raw); }
+    }catch(e){ /* ignore */ }
+
+    // Bereinigt die URL, damit ein Reload nicht wieder denselben Zustand triggert
+    history.replaceState(null, '', window.location.pathname);
+
+    if(pending && Array.isArray(pending.answers)){
+      answers.length = 0;
+      pending.answers.forEach(a => answers.push(a));
+      segmentChoice = Array.isArray(pending.segmentChoice) ? pending.segmentChoice : [];
+      showResult();
+    } else {
+      // Bestätigt, aber kein lokal gespeichertes Ergebnis auf diesem Gerät gefunden
+      // (z. B. Bestätigungslink auf einem anderen Gerät geöffnet).
+      goTo('confirmed-elsewhere');
+    }
+  }
+
+  // Summiert die Punkte je Kompetenzfeld (5 Stationen à 3 Fragen, max. 9 Punkte pro Feld)
+  function computeStationScores(){
+    const sums = [0,0,0,0,0];
+    questions.forEach((q, idx) => { sums[q.station - 1] += (answers[idx] || 0); });
+    return sums;
+  }
+
+  function showResult(){
+    const { score, band } = computeResult();
+    const stationScores = computeStationScores();
+
+    let strongIdx = stationScores.indexOf(Math.max(...stationScores));
+    let weakIdx = stationScores.lastIndexOf(Math.min(...stationScores));
+    if(strongIdx === weakIdx){ weakIdx = (strongIdx + 1) % 5; } // Ausweichen bei Gleichstand über alle Felder
+
+    document.getElementById('resultScore').textContent = score + ' von 45 Punkten';
+    document.getElementById('resultEyebrow').textContent = band.eyebrow;
+    document.getElementById('resultTitle').textContent = band.title;
+    document.getElementById('resultClaim').textContent = band.claim;
+    document.getElementById('resultFocusTag').textContent = 'Dein Schwerpunkt: ' + engpassLabels[weakIdx];
+    document.getElementById('resultKerngefuehl').textContent = band.kerngefuehl;
+
+    document.getElementById('resultAha').innerHTML = band.aha.map(p => '<p>' + p + '</p>').join('');
+    document.getElementById('resultStrengths').innerHTML = band.strengths.map(s => '<li>' + s + '</li>').join('');
+
+    document.getElementById('resultGap').textContent = band.gapText;
+    document.getElementById('resultCost').textContent = band.costText;
+    document.getElementById('resultBarIntro').textContent = band.barIntro;
+
+    document.getElementById('resultNext').textContent = band.nextLabel + '. ' + band.nextFocus;
+    document.getElementById('resultAction').textContent = band.action;
+
+    // Stärke / Hebel — pro Person individuell berechnet, nicht nur nach Stufe
+    document.getElementById('strengthIcon').textContent = stationInsights[strongIdx].icon;
+    document.getElementById('strengthField').textContent = stations[strongIdx].label;
+    document.getElementById('strengthText').textContent = stationInsights[strongIdx].strength;
+
+    document.getElementById('leverIcon').textContent = stationInsights[weakIdx].icon;
+    document.getElementById('leverField').textContent = stations[weakIdx].label;
+    document.getElementById('leverText').textContent = stationInsights[weakIdx].lever;
+
+    // Dominanter Engpass — Stufe + individuell schwächstes Kompetenzfeld
+    document.getElementById('resultBottleneckTitle').textContent = band.name + ' mit Schwerpunkt ' + engpassLabels[weakIdx];
+    document.getElementById('resultBottleneckText').textContent = stationInsights[weakIdx].lever + ' ' + bottleneckHints[band.stageIndex];
+
+    // Kompetenzprofil-Balken
+    const compWrap = document.getElementById('compRows');
+    compWrap.innerHTML = '';
+    stations.forEach((st, i) => {
+      const row = document.createElement('div');
+      row.className = 'comp-row';
+      row.innerHTML =
+        '<div class="comp-head"><span>' + st.label + '</span><span class="comp-score">' + stationScores[i] + '/9</span></div>' +
+        '<div class="comp-bar"><div class="comp-fill" style="width:' + (stationScores[i]/9*100) + '%"></div></div>';
+      compWrap.appendChild(row);
+    });
+
+    // Digitales Team: heute vs. nächste Stufe
+    renderSplitBar('splitToday', band.teamToday);
+    renderSplitBar('splitNext', band.teamNext);
+
+    const pathWrap = document.getElementById('resultPath');
+    pathWrap.innerHTML = '';
+    stagePath.forEach((s, i) => {
+      const el = document.createElement('div');
+      el.className = 'rp-step' + (i === band.stageIndex ? ' current' : '');
+      el.textContent = s;
+      pathWrap.appendChild(el);
+    });
+
+    // Produktempfehlung + CTA-Logik
+    document.getElementById('productPosition').textContent = band.product.position;
+    document.getElementById('productName').textContent = band.product.name;
+    document.getElementById('productWhy').textContent = band.product.why;
+    document.getElementById('productList').innerHTML = band.product.bullets.map(b => '<li>' + b + '</li>').join('');
+    document.getElementById('ctaPrimaryLabel').textContent = band.product.ctaPrimaryLabel;
+    document.getElementById('ctaPrimarySub').textContent = band.product.ctaPrimarySub;
+    document.getElementById('ctaSecondaryText').textContent = band.product.ctaSecondaryText;
+    document.getElementById('ctaPrimaryBtn').setAttribute('href', band.product.ctaHref || '#');
+
+    goTo('result');
+  }
+
+  function renderSplitBar(elId, values){
+    const colors = ['#4A081E','#983D15','#FCA27A','#FEC7AF'];
+    const wrap = document.getElementById(elId);
+    wrap.innerHTML = '';
+    values.forEach((v, i) => {
+      const seg = document.createElement('div');
+      seg.className = 'split-seg';
+      seg.style.width = v + '%';
+      seg.style.background = colors[i];
+      if(v >= 12){ seg.textContent = v + '%'; }
+      wrap.appendChild(seg);
+    });
+  }
+
+  function resetAssessment(){
+    currentQ = 0;
+    answers.fill(null);
+    segmentChoice = [];
+    document.getElementById('fName').value = '';
+    document.getElementById('fEmail').value = '';
+    document.getElementById('fRole').value = '';
+    setFieldError('fNameWrap', false);
+    setFieldError('fEmailWrap', false);
+    try{ localStorage.removeItem(PENDING_KEY); }catch(e){}
+    goTo('landing');
+  }
+
+  // ── INIT ──
+  checkConfirmationReturn();
+</script>
+
+</body>
+</html>
