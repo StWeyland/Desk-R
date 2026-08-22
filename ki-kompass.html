@@ -735,13 +735,40 @@
   .product-list li:last-child{ margin-bottom:0; }
   .product-list li::before{ content:'→'; flex-shrink:0; color: var(--deep-salmon); font-weight:700; }
 
-  .cta-row{ display:flex; flex-direction:column; align-items:flex-start; }
-  .product-card .btn{ background: var(--deep-salmon); }
-  .cta-sub{ font-size:0.82rem; color:#6a3a30; margin-top:0.6rem; }
-  .cta-secondary-text{
-    font-size:0.85rem; line-height:1.6; color:#5a3a40;
-    border-top:1px solid rgba(74,8,30,0.14); padding-top:1.2rem; margin-top:1.4rem;
+  .product-tags{ display:flex; flex-wrap:wrap; gap:0.6rem; margin-bottom:1rem; }
+
+  .status-pill{
+    display:inline-flex; align-items:center; gap:0.35rem;
+    font-size:0.68rem; font-weight:700; letter-spacing:0.04em;
+    border:1px dashed var(--deep-salmon); color: var(--deep-salmon);
+    background: rgba(255,255,255,0.4);
+    padding:0.3rem 0.8rem; border-radius:100px;
   }
+
+  .product-roadmap{
+    display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;
+    margin:1.6rem 0 0.7rem;
+  }
+  .product-roadmap .rm-step{
+    font-size:0.72rem; font-weight:700; letter-spacing:0.01em;
+    padding:0.5rem 0.85rem; border-radius:100px;
+    border:1px solid rgba(74,8,30,0.22); color:#6a3a30;
+    background: rgba(255,255,255,0.55);
+  }
+  .product-roadmap .rm-step.current{
+    background: var(--burgundy); color: var(--pale-tint); border-color: var(--burgundy);
+  }
+  .product-roadmap .rm-arrow{ color:#9a6a60; font-size:0.75rem; }
+  .roadmap-caption{ font-size:0.8rem; line-height:1.6; color:#6a3a30; margin-bottom:1.6rem; }
+
+  .product-status-note{
+    border-top:1px solid rgba(74,8,30,0.14); padding-top:1.2rem; margin-top:0.4rem;
+  }
+  .product-status-note .label{
+    font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
+    color: var(--deep-salmon); margin-bottom:0.5rem;
+  }
+  .product-status-note p{ font-size:0.85rem; line-height:1.65; color:#5a3a40; }
 
   .newsletter-note{
     background: var(--burgundy-light);
@@ -1031,18 +1058,21 @@
 
         <div class="product-card">
           <p class="label">Deine Produktempfehlung</p>
-          <span class="product-position" id="productPosition"></span>
+          <div class="product-tags">
+            <span class="product-position" id="productPosition"></span>
+            <span class="status-pill">🔧 Gerade im Aufbau</span>
+          </div>
           <h3 id="productName"></h3>
           <p class="product-why" id="productWhy"></p>
           <ul class="product-list" id="productList"></ul>
-          <div class="cta-row">
-            <!-- TODO: echten Ziel-Link der Verkaufsseite eintragen, sobald verfügbar -->
-            <a class="btn" id="ctaPrimaryBtn" href="#" target="_blank" rel="noopener">
-              <span id="ctaPrimaryLabel"></span> →
-            </a>
-            <p class="cta-sub" id="ctaPrimarySub"></p>
+
+          <div class="product-roadmap" id="productRoadmap"></div>
+          <p class="roadmap-caption" id="roadmapCaption"></p>
+
+          <div class="product-status-note">
+            <p class="label">So bleibst du vorn dran</p>
+            <p id="productStatusNote"></p>
           </div>
-          <p class="cta-secondary-text" id="ctaSecondaryText"></p>
         </div>
 
         <div class="newsletter-note">
@@ -1171,6 +1201,11 @@
 
   const stagePath = ['KI-Neuling','KI-Entdeckerin','KI-Anwenderin','AI Chief of Staff'];
 
+  // Der komplette Produktpfad, den Desk Revolution gerade aufbaut — alle drei Stufen
+  // sind aktuell noch in Arbeit. Wird als kleine Roadmap in der Produktempfehlung
+  // angezeigt, damit sichtbar ist, wohin die Reise geht, auch ohne buchbaren Link.
+  const productRoadmapSteps = ['Cowork-Kompass', 'Workshop 2: Digitales Assistenzteam', 'AI Chief of Staff System'];
+
   // Sprechende Bezeichnung je Kompetenzfeld — wird mit dem individuell schwächsten
   // Feld kombiniert zu "Du bist {Stufe} mit Schwerpunkt {Engpass}".
   const engpassLabels = ['Struktur & Wiederholbarkeit','KI-Gewohnheit','Wissensmanagement','Automatisierung & Delegation','Rollenklarheit'];
@@ -1235,10 +1270,8 @@
           'Wie du E-Mails und Teams-Nachrichten sauber triagierst',
           'Wo Cowork endet — und welche erste KI-Rolle dich wirklich entlasten könnte'
         ],
-        ctaPrimaryLabel:'Starte mit dem Cowork-Kompass',
-        ctaPrimarySub:'Orientierung, drei Quick Wins und deine erste Rollenidee.',
-        ctaSecondaryText:'Noch nicht bereit für den nächsten Schritt? „KI im Klartext“ landet ab jetzt alle zwei Wochen in deinem Postfach — mit Impulsen, die dir schon vor dem Workshop weiterhelfen.',
-        ctaHref:'#'
+        roadmapIndex:0,
+        statusNote:'Der Cowork-Kompass entsteht gerade. Mit deiner Anmeldung bist du schon für „KI im Klartext“ eingetragen — dort bekommst du als Erste Bescheid, sobald er startet, und bis dahin Impulse, mit denen du selbst schon loslegen kannst.'
       },
       teamToday:[90,5,3,2], teamNext:[75,10,5,10]
     },
@@ -1276,10 +1309,8 @@
           'Welche Qualitätsregeln gelten, bevor du ein Ergebnis freigibst',
           'Wann du eingreifst und wann die Rolle selbstständig arbeitet'
         ],
-        ctaPrimaryLabel:'Baue dein digitales Assistenzteam',
-        ctaPrimarySub:'Aus einzelnen KI-Tests werden klare digitale Rollen.',
-        ctaSecondaryText:'Brauchst du vorher noch mehr Orientierung? Dann starte mit dem Cowork-Kompass — er zeigt dir zuerst, wo Cowork dir im Alltag am meisten bringt.',
-        ctaHref:'#'
+        roadmapIndex:1,
+        statusNote:'Workshop 2 ist gerade in Arbeit. Über „KI im Klartext“, für das du dich mit deiner Anmeldung bereits eingetragen hast, bekommst du als Erste Bescheid, wenn es losgeht — plus Impulse, mit denen du bis dahin selbst weiterkommst.'
       },
       teamToday:[75,10,5,10], teamNext:[55,20,12,13]
     },
@@ -1317,10 +1348,8 @@
           'Follow-up Manager — nichts fällt mehr durchs Raster',
           'Calendar Defender & Research Analyst — je nachdem, wo dein Alltag es am meisten braucht'
         ],
-        ctaPrimaryLabel:'Baue dein digitales Assistenzteam',
-        ctaPrimarySub:'Mach aus KI-Nutzung ein System, das dich wirklich entlastet.',
-        ctaSecondaryText:'Baust du bereits mehrere Rollen und Wissensbereiche gleichzeitig auf? Dann prüfe direkt das AI Chief of Staff System.',
-        ctaHref:'#'
+        roadmapIndex:1,
+        statusNote:'Workshop 2 entsteht gerade. Du bist über „KI im Klartext“ bereits vorgemerkt und bekommst als Erste Bescheid, wenn es losgeht — inklusive Impulsen, die dich schon vorher weiterbringen.'
       },
       teamToday:[55,20,12,13], teamNext:[35,25,20,20]
     },
@@ -1358,10 +1387,8 @@
           'Ein Betriebsmodell für Mensch-KI-Zusammenarbeit',
           'Qualitätsregeln und eine skalierbare Arbeitsweise'
         ],
-        ctaPrimaryLabel:'Prüfe das AI Chief of Staff System',
-        ctaPrimarySub:'Baue dein vollständiges Betriebsmodell für Mensch-KI-Zusammenarbeit.',
-        ctaSecondaryText:'Willst du zuerst eine einzelne Rolle sauber designen? Dann starte mit Workshop 2 — Baue dein digitales Assistenzteam.',
-        ctaHref:'#'
+        roadmapIndex:2,
+        statusNote:'Das AI Chief of Staff System ist das nächste große Vorhaben von Desk Revolution und befindet sich aktuell im Aufbau. Über „KI im Klartext“ erfährst du als Erste, wenn es startet.'
       },
       teamToday:[35,25,20,20], teamNext:[20,30,25,25]
     },
@@ -1648,15 +1675,29 @@
       pathWrap.appendChild(el);
     });
 
-    // Produktempfehlung + CTA-Logik
+    // Produktempfehlung + Roadmap (noch kein Kauf-Link möglich, alle drei Bausteine
+    // sind aktuell in Arbeit — deshalb zeigen wir Weg und Status statt eines toten Buttons)
     document.getElementById('productPosition').textContent = band.product.position;
     document.getElementById('productName').textContent = band.product.name;
     document.getElementById('productWhy').textContent = band.product.why;
     document.getElementById('productList').innerHTML = band.product.bullets.map(b => '<li>' + b + '</li>').join('');
-    document.getElementById('ctaPrimaryLabel').textContent = band.product.ctaPrimaryLabel;
-    document.getElementById('ctaPrimarySub').textContent = band.product.ctaPrimarySub;
-    document.getElementById('ctaSecondaryText').textContent = band.product.ctaSecondaryText;
-    document.getElementById('ctaPrimaryBtn').setAttribute('href', band.product.ctaHref || '#');
+    document.getElementById('productStatusNote').textContent = band.product.statusNote;
+
+    const roadmapWrap = document.getElementById('productRoadmap');
+    roadmapWrap.innerHTML = '';
+    productRoadmapSteps.forEach((step, i) => {
+      if(i > 0){
+        const arrow = document.createElement('span');
+        arrow.className = 'rm-arrow';
+        arrow.textContent = '→';
+        roadmapWrap.appendChild(arrow);
+      }
+      const el = document.createElement('span');
+      el.className = 'rm-step' + (i === band.product.roadmapIndex ? ' current' : '');
+      el.textContent = step;
+      roadmapWrap.appendChild(el);
+    });
+    document.getElementById('roadmapCaption').textContent = 'Alle drei Bausteine sind aktuell im Aufbau. Dein Startpunkt: ' + productRoadmapSteps[band.product.roadmapIndex] + '.';
 
     goTo('result');
   }
