@@ -46,6 +46,13 @@ db.exec(`
     added_at INTEGER NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS sync_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_at INTEGER NOT NULL,
+    trigger_type TEXT NOT NULL,
+    results TEXT NOT NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_posts_platform ON posts(platform);
   CREATE INDEX IF NOT EXISTS idx_posts_published_at ON posts(published_at);
 `);
@@ -218,6 +225,22 @@ export function removeCompetitor(id) {
   if (competitor) {
     db.prepare('DELETE FROM posts WHERE platform = ? AND owner_handle = ?').run(competitor.platform, competitor.handle);
   }
+}
+
+// --- Sync-Protokoll (fuer die automatischen Laeufe) ---
+
+export function addSyncLog(triggerType, results) {
+  db.prepare('INSERT INTO sync_log (run_at, trigger_type, results) VALUES (?, ?, ?)').run(
+    Date.now(),
+    triggerType,
+    JSON.stringify(results),
+  );
+}
+
+export function getLastSyncLog() {
+  const row = db.prepare('SELECT * FROM sync_log ORDER BY run_at DESC LIMIT 1').get();
+  if (!row) return null;
+  return { ...row, results: JSON.parse(row.results) };
 }
 
 export default db;

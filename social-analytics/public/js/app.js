@@ -78,7 +78,6 @@ async function syncPlatform(platform, btn) {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Synchronisieren';
-    document.getElementById('lastSync').textContent = `Letzte Synchronisierung: ${new Date().toLocaleString('de-DE')}`;
   }
 }
 
@@ -378,6 +377,34 @@ function initScopeFilter() {
   };
 }
 
+async function loadSyncLog() {
+  const res = await fetch('/api/sync-log');
+  const { lastRun } = await res.json();
+  const el = document.getElementById('lastSync');
+  if (!lastRun) {
+    el.textContent = 'Noch keine automatische Analyse gelaufen (naechster Termin: Mo/Mi/Fr 06:00 Uhr)';
+    return;
+  }
+  const when = new Date(lastRun.run_at).toLocaleString('de-DE');
+  const label = lastRun.trigger_type === 'scheduled' ? 'automatisch' : 'manuell';
+  el.textContent = `Letzte Analyse: ${when} (${label})`;
+}
+
+function initRunNowButton() {
+  const btn = document.getElementById('runNowBtn');
+  btn.onclick = async () => {
+    btn.disabled = true;
+    btn.textContent = 'Analysiere...';
+    try {
+      await fetch('/api/sync-all', { method: 'POST' });
+      await Promise.all([loadSyncLog(), loadSummary()]);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Jetzt analysieren';
+    }
+  };
+}
+
 function init() {
   const params = new URLSearchParams(window.location.search);
   if (params.get('connected')) {
@@ -385,9 +412,11 @@ function init() {
   }
   initCompetitorForm();
   initScopeFilter();
+  initRunNowButton();
   loadStatus();
   loadCompetitors();
   loadSummary();
+  loadSyncLog();
 }
 
 init();

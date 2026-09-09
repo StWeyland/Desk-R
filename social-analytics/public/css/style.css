@@ -50,6 +50,12 @@ body {
 
 .muted { color: var(--muted); font-size: 13px; }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 main {
   max-width: 1100px;
   margin: 0 auto;

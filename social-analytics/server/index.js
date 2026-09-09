@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import authRoutes from './routes/auth.js';
 import apiRoutes from './routes/api.js';
+import { startScheduler } from './scheduler.js';
 import './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,4 +28,5 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.listen(config.port, () => {
   console.log(`Desk-R Social Analytics laeuft auf ${config.baseUrl}`);
+  startScheduler();
 });

@@ -12,8 +12,10 @@ import {
   getCompetitor,
   removeCompetitor,
   addManualPost,
+  getLastSyncLog,
 } from '../db.js';
 import { isPlatformConfigured } from '../config.js';
+import { runAutomaticSync } from '../scheduler.js';
 
 const router = Router();
 
@@ -60,6 +62,21 @@ router.post('/sync/:platform', async (req, res) => {
   } catch (err) {
     res.status(502).json({ error: `Synchronisierung fehlgeschlagen: ${err.message}` });
   }
+});
+
+// Manueller Anstoss des gleichen Ablaufs, den der Zeitplan Mo/Mi/Fr automatisch
+// ausfuehrt - praktisch zum Testen, ohne auf den naechsten Termin zu warten.
+router.post('/sync-all', async (req, res) => {
+  try {
+    const results = await runAutomaticSync('manual');
+    res.json({ ok: true, results });
+  } catch (err) {
+    res.status(500).json({ error: `Sync fehlgeschlagen: ${err.message}` });
+  }
+});
+
+router.get('/sync-log', (req, res) => {
+  res.json({ lastRun: getLastSyncLog() });
 });
 
 router.get('/posts', (req, res) => {

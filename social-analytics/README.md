@@ -83,6 +83,19 @@ deinem eigenen Konto zu verbinden. Es fallen dabei keine Kosten an.
    TikTok die App vorher fuer alle Nutzer freigeben muss.
 5. Client Key / Client Secret in die `.env` kopieren.
 
+## Automatische Analyse (3x pro Woche)
+
+Solange die App laeuft, synchronisiert sie sich selbststaendig **Montag,
+Mittwoch und Freitag um 06:00 Uhr** (Berlin-Zeit) - alle verbundenen eigenen
+Konten plus alle Instagram-Wettbewerber mit automatischem Tracking. Kein Klick
+noetig. Im Dashboard oben rechts steht, wann der letzte Lauf war; ueber
+"Jetzt analysieren" laesst er sich jederzeit manuell vorziehen.
+
+Wichtig: Das funktioniert nur, wenn die App **durchgehend laeuft** - auf
+deinem eigenen Rechner nur, solange er an und `npm start` aktiv ist. Fuer
+"laeuft immer, auch wenn mein Laptop aus ist" muss die App auf einem Server
+liegen (siehe Abschnitt "Deployment" weiter unten).
+
 ## Wettbewerber tracken
 
 Im Bereich "Wettbewerber" im Dashboard ein Konto hinzufuegen (Plattform +
@@ -129,6 +142,35 @@ lassen sich eigene und fremde Beitraege ein- und ausblenden.
 - **Wettbewerber auf LinkedIn/TikTok**: bewusst manuell, weil es dafuer keine
   autorisierte API gibt. Das ist kein technisches Provisorium, sondern die
   Grenze, die die Plattformen selbst ziehen.
+
+## Deployment (damit es dauerhaft laeuft)
+
+Empfehlung: [Railway](https://railway.app) - einer der einfachsten Anbieter,
+kein Server-Wissen noetig, Kosten ca. 5 USD/Monat bei dieser Nutzungsgroesse.
+
+1. Auf [railway.app](https://railway.app) mit deinem GitHub-Konto anmelden.
+2. "New Project" -> "Deploy from GitHub repo" -> das Desk-R-Repository
+   auswaehlen. Railway erkennt `package.json` automatisch und startet
+   `npm install` + `npm start`.
+3. Im Projekt unter "Variables" die gleichen Werte eintragen wie in deiner
+   lokalen `.env` (LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET, usw.) plus
+   `SESSION_SECRET` (ein beliebiger langer Zufallsstring).
+4. Unter "Settings -> Networking" eine oeffentliche Domain generieren lassen
+   (z.B. `deskr-social.up.railway.app`). Diese URL als `APP_BASE_URL` in den
+   Variablen eintragen (ohne Schraegstrich am Ende).
+5. Unter "Settings -> Volumes" ein Volume anlegen und unter `/app/data`
+   einhaengen - das ist der Ordner, in dem die Datenbank liegt. Ohne dieses
+   Volume gehen deine verbundenen Konten bei jedem Neustart verloren.
+6. In den drei Entwickler-Portalen (LinkedIn/Meta/TikTok) die Redirect-URIs
+   von `http://localhost:3000/...` auf `https://deskr-social.up.railway.app/...`
+   aendern (bzw. beide Varianten eintragen, wenn lokal weiterhin getestet
+   werden soll).
+7. Im Railway-Dashboard den Deploy-Status abwarten, dann die generierte URL
+   im Browser oeffnen - das Dashboard sieht identisch aus wie lokal, laeuft
+   jetzt aber dauerhaft weiter, auch wenn dein Rechner aus ist.
+
+Danach: einmalig im laufenden Dashboard die eigenen Konten verbinden und
+Wettbewerber eintragen (Schritt 3 unten) - ab da laeuft alles automatisch.
 
 ## Tech-Stack
 
