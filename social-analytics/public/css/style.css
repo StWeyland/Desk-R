@@ -1,0 +1,206 @@
+:root {
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --ink: #1c1c1c;
+  --muted: #6b6b6b;
+  --border: #e6e3dc;
+  --accent: #a8743a;
+  --accent-ink: #ffffff;
+  --linkedin: #0a66c2;
+  --instagram: #c1387e;
+  --tiktok: #101010;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14130f;
+    --surface: #1e1c17;
+    --ink: #f2ede3;
+    --muted: #a49a86;
+    --border: #33301f;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 700;
+}
+.brand span {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.muted { color: var(--muted); font-size: 13px; }
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 32px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+h2, h3 { margin: 0 0 12px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.account-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.account-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.account-card .platform-name {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+}
+.dot.connected { background: #2ea043; }
+
+.account-card .status-text { color: var(--muted); font-size: 13px; }
+
+.btn {
+  display: inline-block;
+  border: 1px solid var(--border);
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: center;
+}
+.btn.secondary {
+  background: transparent;
+  color: var(--ink);
+}
+.btn.danger {
+  background: transparent;
+  color: #c0392b;
+  border-color: #c0392b;
+}
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+.summary-cards .card {
+  text-align: center;
+}
+.summary-cards .value {
+  font-size: 28px;
+  font-weight: 700;
+}
+.summary-cards .label {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+@media (max-width: 800px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.tag .count { color: var(--muted); margin-left: 4px; }
+
+.posts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.posts-table th, .posts-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.posts-table td.content {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: #fff;
+}
+.pill.linkedin { background: var(--linkedin); }
+.pill.instagram { background: var(--instagram); }
+.pill.tiktok { background: var(--tiktok); }
+
+.warning {
+  background: #fff4e5;
+  border: 1px solid #f0c36d;
+  color: #7a4d00;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-top: 8px;
+}

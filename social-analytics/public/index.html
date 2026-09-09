@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Desk-R Social Analytics</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Desk-R <span>Social Analytics</span></div>
+    <div id="lastSync" class="muted"></div>
+  </header>
+
+  <main>
+    <section class="accounts">
+      <h2>Verbundene Konten</h2>
+      <div id="accountCards" class="account-cards"></div>
+    </section>
+
+    <section class="summary-cards" id="summaryCards"></section>
+
+    <section class="grid-2">
+      <div class="card">
+        <h3>Beste Uhrzeit zum Posten</h3>
+        <canvas id="hourChart" height="220"></canvas>
+      </div>
+      <div class="card">
+        <h3>Bester Wochentag</h3>
+        <canvas id="weekdayChart" height="220"></canvas>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <h3>Engagement nach Plattform</h3>
+        <canvas id="platformChart" height="220"></canvas>
+      </div>
+      <div class="card">
+        <h3>Meistgenutzte Hashtags</h3>
+        <div id="hashtagList" class="tag-list"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Top-Beitraege</h3>
+      <table id="topPostsTable" class="posts-table">
+        <thead>
+          <tr>
+            <th>Plattform</th>
+            <th>Inhalt</th>
+            <th>Datum</th>
+            <th>Likes</th>
+            <th>Kommentare</th>
+            <th>Shares</th>
+            <th>Views</th>
+            <th>Engagement</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
