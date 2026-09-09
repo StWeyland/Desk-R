@@ -1,0 +1,662 @@
+{
+  "name": "Desk Revolution – Content-Automation-Learning-Loop",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ZYKLUS 1 — Recherche → Idee → Entwurf\nLäuft wöchentlich. Endet mit einem fertigen Entwurf (Text + Bild, ggf. Video) in der Content-Pipeline, Status \"Zur Freigabe\".",
+        "height": 220,
+        "width": 460
+      },
+      "id": "note-zyklus1",
+      "name": "Sticky: Zyklus 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-400, -260]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "weeks", "triggerAtDay": [1], "triggerAtHour": 8 }
+          ]
+        }
+      },
+      "id": "trigger-woche",
+      "name": "Wöchentlicher Start (Recherche)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-360, -60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/{{$env.APIFY_ACTOR_ID}}/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"topics\": [\"Zukunft der Assistenzrolle\", \"KI-Zusammenarbeit\", \"digitale Arbeitssysteme\"],\n  \"maxItems\": 15\n}",
+        "options": {}
+      },
+      "id": "apify-request",
+      "name": "Apify – Trend-Recherche",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-140, -60],
+      "notes": "Actor-ID + Query-Auth-Credential (Apify-Token) in n8n hinterlegen. Actor wird gemeinsam mit Steffi ausgewählt, siehe setup-checkliste.md Punkt 4."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Apify-Rohdaten in das Research-Pool-Format bringen\nconst items = $input.all().map(i => i.json);\nreturn items.map(item => ({\n  json: {\n    titel_thema: item.title || item.topic || 'Ohne Titel',\n    zusammenfassung: item.summary || item.text || '',\n    quelle_link: item.url || '',\n    kategorie: item.category || 'Trends'\n  }\n}));"
+      },
+      "id": "code-apify-parse",
+      "name": "Apify-Treffer aufbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [60, -60]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "create",
+        "databaseId": {
+          "__rl": true,
+          "value": "3b35b37e-eeea-44a8-92b0-f7718dad8281",
+          "mode": "id"
+        },
+        "title": "={{ $json.titel_thema }}",
+        "propertiesUi": {
+          "propertyValues": [
+            { "key": "Zusammenfassung", "textValue": "={{ $json.zusammenfassung }}" },
+            { "key": "Quelle/Link", "urlValue": "={{ $json.quelle_link }}" },
+            { "key": "Kategorie", "multiSelectValue": ["={{ $json.kategorie }}"] },
+            { "key": "Status", "selectValue": "Neu" },
+            { "key": "Relevanz", "selectValue": "Mittel" }
+          ]
+        }
+      },
+      "id": "notion-create-research",
+      "name": "Research-Pool: Treffer speichern",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [260, -60],
+      "notes": "Prüfe nach dem Import die genauen Feld-Keys — je nach n8n-Notion-Node-Version heißen sie leicht anders (Dropdown in der UI nutzen)."
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "3b35b37e-eeea-44a8-92b0-f7718dad8281",
+          "mode": "id"
+        },
+        "filters": {
+          "conditions": [{ "key": "Status", "condition": "equals", "selectValue": "Neu" }]
+        },
+        "limit": 10
+      },
+      "id": "notion-get-research-neu",
+      "name": "Research-Pool: Neue Einträge",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [460, -160]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "3b35b37e-eeea-44a8-92b0-f7718dad8281",
+          "mode": "id"
+        },
+        "filters": {
+          "conditions": [{ "key": "Kategorie", "condition": "contains", "multiSelectValue": "Learnings" }]
+        },
+        "limit": 5
+      },
+      "id": "notion-get-research-learnings",
+      "name": "Research-Pool: Learnings",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [460, 40]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex"
+      },
+      "id": "merge-research",
+      "name": "Research + Learnings zusammenführen",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [660, -60]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Alle Research- und Learning-Einträge zu einem Textblock für den Claude-Prompt zusammenfassen\nconst items = $input.all().map(i => i.json);\nconst text = items.map(i => `- [${i['Kategorie'] || ''}] ${i['Titel/Thema'] || i.titel_thema || ''}: ${i['Zusammenfassung'] || i.zusammenfassung || ''}`).join('\\n');\nreturn [{ json: { research_input: text } }];"
+      },
+      "id": "code-build-context",
+      "name": "Prompt-Kontext bauen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, -60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "anthropic-version", "value": "2023-06-01" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-5\",\n  \"max_tokens\": 2000,\n  \"system\": {{ JSON.stringify($('Prompt: Ideengenerierung (Text)').first().json.prompt_text) }},\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.research_input) }} }]\n}",
+        "options": {}
+      },
+      "id": "claude-idea",
+      "name": "Claude – Ideengenerierung",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1060, -60],
+      "notes": "System-Prompt = Inhalt von prompts/01-ideengenerierung.md. Am einfachsten: Prompt-Text in einem vorgeschalteten Set-Node ablegen und hier referenzieren, oder fest einfügen."
+    },
+    {
+      "parameters": {
+        "jsCode": "// JSON-Array aus der Claude-Antwort extrahieren\nconst text = $json.content[0].text;\nconst match = text.match(/\\[[\\s\\S]*\\]/);\nconst ideas = JSON.parse(match ? match[0] : text);\nreturn ideas.map(idea => ({ json: idea }));"
+      },
+      "id": "code-parse-ideas",
+      "name": "Ideen parsen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1260, -60]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "create",
+        "databaseId": {
+          "__rl": true,
+          "value": "60a44aa4-fa57-4c85-b136-d9daaec86e5e",
+          "mode": "id"
+        },
+        "title": "={{ $json.titel_hook }}",
+        "propertiesUi": {
+          "propertyValues": [
+            { "key": "Format", "selectValue": "={{ $json.format_vorschlag }}" },
+            { "key": "Status", "selectValue": "Entwurf" },
+            { "key": "Ziel-Profil", "selectValue": "={{ $json.ziel_profil }}" }
+          ]
+        }
+      },
+      "id": "notion-create-pipeline-draft",
+      "name": "Content-Pipeline: Entwurf anlegen",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [1460, -60],
+      "notes": "Die Relation 'Basiert auf Research' danach in Notion manuell prüfen/verknüpfen, falls der Node sie nicht automatisch setzt."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "anthropic-version", "value": "2023-06-01" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-5\",\n  \"max_tokens\": 3000,\n  \"system\": \"Siehe prompts/02-drehbuch-post.md\",\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify(JSON.stringify($json)) }} }]\n}",
+        "options": {}
+      },
+      "id": "claude-script",
+      "name": "Claude – Post-Drehbuch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1660, -60]
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.content[0].text;\nconst match = text.match(/\\{[\\s\\S]*\\}/);\nconst parsed = JSON.parse(match ? match[0] : text);\nreturn [{ json: { ...($('Content-Pipeline: Entwurf anlegen').first().json), ...parsed } }];"
+      },
+      "id": "code-parse-script",
+      "name": "Drehbuch parsen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1860, -60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "anthropic-version", "value": "2023-06-01" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-5\",\n  \"max_tokens\": 500,\n  \"system\": \"Siehe prompts/03-bildprompt.md\",\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.post_text) }} }]\n}",
+        "options": {}
+      },
+      "id": "claude-imageprompt",
+      "name": "Claude – Bildprompt",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2060, -60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-image-1\",\n  \"prompt\": {{ JSON.stringify($json.content[0].text) }},\n  \"size\": \"1024x1024\"\n}",
+        "options": {}
+      },
+      "id": "gptimage-request",
+      "name": "GPT Image 2 – Bild erzeugen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2260, -60],
+      "notes": "Modellname vor dem ersten Lauf gegen die aktuelle OpenAI-Doku prüfen (siehe setup-checkliste.md Punkt 5)."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Content-Pipeline: Entwurf anlegen').first().json.Format }}",
+              "rightValue": "Video",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-video",
+      "name": "Format = Video?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2460, -60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/text-to-speech/{{$env.ELEVENLABS_VOICE_ID}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": {{ JSON.stringify($('Drehbuch parsen').first().json.sprecher_skript) }},\n  \"model_id\": \"eleven_multilingual_v2\"\n}",
+        "options": {}
+      },
+      "id": "elevenlabs-request",
+      "name": "ElevenLabs – Voiceover",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2660, -160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fal.ai/v1/seedance-2.5/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"image_url\": {{ JSON.stringify($('GPT Image 2 – Bild erzeugen').first().json.data[0].url) }},\n  \"audio_url\": {{ JSON.stringify($json.audio_url) }},\n  \"script\": {{ JSON.stringify($('Drehbuch parsen').first().json.sprecher_skript) }}\n}",
+        "options": {}
+      },
+      "id": "seedance-request",
+      "name": "Seedance 2.5 – Video erzeugen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2860, -160],
+      "notes": "Endpoint ist ein Platzhalter — trag hier den tatsächlichen Endpoint deines Seedance-Anbieters ein (fal.ai / Volcengine, siehe setup-checkliste.md Punkt 7)."
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Content-Pipeline: Entwurf anlegen').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            { "key": "Text", "textValue": "={{ $('Drehbuch parsen').first().json.post_text }}" },
+            { "key": "Sprecher-Skript", "textValue": "={{ $('Drehbuch parsen').first().json.sprecher_skript }}" },
+            { "key": "Bild-URL", "urlValue": "={{ $('GPT Image 2 – Bild erzeugen').first().json.data[0].url }}" },
+            { "key": "Video-URL", "urlValue": "={{ $json.video_url || '' }}" },
+            { "key": "Status", "selectValue": "Zur Freigabe" }
+          ]
+        }
+      },
+      "id": "notion-update-draft-ready",
+      "name": "Content-Pipeline: Zur Freigabe stellen",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [3060, -60],
+      "notes": "Ab hier wartet der Entwurf auf Steffis manuelle Freigabe in Notion (Status → 'Freigegeben'). Kein weiterer automatischer Schritt, bis das passiert ist."
+    },
+    {
+      "parameters": {
+        "content": "## ZYKLUS 2 — Freigabe → Posten → Kennzahlen → Learning\nLäuft täglich. Postet nur, was Steffi selbst auf \"Freigegeben\" gesetzt hat, holt danach Kennzahlen und schließt den Lern-Loop.",
+        "height": 220,
+        "width": 460
+      },
+      "id": "note-zyklus2",
+      "name": "Sticky: Zyklus 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-400, 280]
+    },
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "days", "triggerAtHour": 9 }] }
+      },
+      "id": "trigger-taeglich",
+      "name": "Täglicher Check: Freigegeben & fällig",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-360, 480]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "60a44aa4-fa57-4c85-b136-d9daaec86e5e",
+          "mode": "id"
+        },
+        "filters": {
+          "conditions": [
+            { "key": "Status", "condition": "equals", "selectValue": "Freigegeben" }
+          ]
+        }
+      },
+      "id": "notion-get-ready",
+      "name": "Content-Pipeline: Fällige Posts",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [-140, 480]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.POSTING_BRIDGE_ENDPOINT}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"platform\": \"linkedin\",\n  \"text\": {{ JSON.stringify($json.Text) }},\n  \"image_url\": {{ JSON.stringify($json['Bild-URL']) }},\n  \"video_url\": {{ JSON.stringify($json['Video-URL']) }}\n}",
+        "options": {}
+      },
+      "id": "linkedin-post",
+      "name": "LinkedIn – Post veröffentlichen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [60, 480],
+      "notes": "Solange keine Posting-Bridge (z. B. Unipile/Ayrshare/Metricool) angebunden ist: diesen Node deaktivieren und stattdessen manuell posten, siehe setup-checkliste.md Punkt 8."
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": { "__rl": true, "value": "={{ $('Content-Pipeline: Fällige Posts').item.json.id }}", "mode": "id" },
+        "propertiesUi": {
+          "propertyValues": [
+            { "key": "Status", "selectValue": "Gepostet" }
+          ]
+        }
+      },
+      "id": "notion-update-posted",
+      "name": "Content-Pipeline: Als gepostet markieren",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [260, 480]
+    },
+    {
+      "parameters": { "amount": 3, "unit": "days" },
+      "id": "wait-analytics",
+      "name": "Warten (3 Tage)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [460, 480]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.POSTING_BRIDGE_ENDPOINT}}/analytics",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [{ "name": "post_id", "value": "={{ $json.post_id }}" }]
+        },
+        "options": {}
+      },
+      "id": "linkedin-analytics",
+      "name": "LinkedIn – Kennzahlen abrufen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 480]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": { "__rl": true, "value": "1eb590a6-8b70-4486-a6b1-f0ecee849c96", "mode": "id" },
+        "limit": 10,
+        "options": { "sort": [{ "key": "Gepostet am", "direction": "desc" }] }
+      },
+      "id": "notion-get-perf-avg",
+      "name": "Performance: letzte 10 Posts",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [860, 480]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst avg = (key) => items.length ? items.reduce((s, i) => s + (i[key] || 0), 0) / items.length : 0;\nreturn [{ json: {\n  impressionen_avg: avg('Impressionen'),\n  reaktionen_avg: avg('Reaktionen'),\n  kommentare_avg: avg('Kommentare'),\n  shares_avg: avg('Shares')\n} }];"
+      },
+      "id": "code-avg",
+      "name": "Durchschnitt berechnen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 480]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "anthropic-version", "value": "2023-06-01" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-5\",\n  \"max_tokens\": 800,\n  \"system\": \"Siehe prompts/04-lernanalyse.md\",\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify(JSON.stringify({neue_kennzahlen: $('LinkedIn – Kennzahlen abrufen').first().json, durchschnittswerte: $('Durchschnitt berechnen').first().json, post_text: $('Content-Pipeline: Fällige Posts').first().json.Text})) }} }]\n}",
+        "options": {}
+      },
+      "id": "claude-learn",
+      "name": "Claude – Lern-Analyse",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1260, 480]
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.content[0].text;\nconst match = text.match(/\\{[\\s\\S]*\\}/);\nreturn [{ json: JSON.parse(match ? match[0] : text) }];"
+      },
+      "id": "code-parse-learn",
+      "name": "Analyse parsen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1460, 480]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "create",
+        "databaseId": { "__rl": true, "value": "1eb590a6-8b70-4486-a6b1-f0ecee849c96", "mode": "id" },
+        "title": "={{ $('Content-Pipeline: Fällige Posts').first().json['Titel/Hook'] }}",
+        "propertiesUi": {
+          "propertyValues": [
+            { "key": "Plattform", "selectValue": "LinkedIn" },
+            { "key": "Impressionen", "numberValue": "={{ $('LinkedIn – Kennzahlen abrufen').first().json.impressions }}" },
+            { "key": "Reaktionen", "numberValue": "={{ $('LinkedIn – Kennzahlen abrufen').first().json.reactions }}" },
+            { "key": "Kommentare", "numberValue": "={{ $('LinkedIn – Kennzahlen abrufen').first().json.comments }}" },
+            { "key": "Shares", "numberValue": "={{ $('LinkedIn – Kennzahlen abrufen').first().json.shares }}" },
+            { "key": "Engagement-Rate (%)", "numberValue": "={{ $json.engagement_rate }}" },
+            { "key": "Performance-Kategorie", "selectValue": "={{ $json.performance_kategorie }}" },
+            { "key": "Learning", "textValue": "={{ $json.learning }}" },
+            { "key": "Ins Research-Pool übernommen", "checkboxValue": true }
+          ]
+        }
+      },
+      "id": "notion-create-performance",
+      "name": "Performance: Eintrag anlegen",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [1660, 480],
+      "notes": "Die Relation 'Content' danach in Notion mit dem passenden Pipeline-Eintrag verknüpfen, falls der Node sie nicht automatisch setzt."
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "create",
+        "databaseId": { "__rl": true, "value": "3b35b37e-eeea-44a8-92b0-f7718dad8281", "mode": "id" },
+        "title": "={{ $json.research_pool_eintrag.titel_thema }}",
+        "propertiesUi": {
+          "propertyValues": [
+            { "key": "Zusammenfassung", "textValue": "={{ $json.research_pool_eintrag.zusammenfassung }}" },
+            { "key": "Kategorie", "multiSelectValue": ["Learnings"] },
+            { "key": "Status", "selectValue": "Neu" },
+            { "key": "Relevanz", "selectValue": "Hoch" }
+          ]
+        }
+      },
+      "id": "notion-create-research-learning",
+      "name": "Research-Pool: Learning speichern",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [1860, 480],
+      "notes": "Schließt den Lern-Loop: dieser Eintrag fließt beim nächsten Durchlauf von 'Research-Pool: Learnings' wieder in die Ideengenerierung ein."
+    }
+  ],
+  "connections": {
+    "Wöchentlicher Start (Recherche)": {
+      "main": [[{ "node": "Apify – Trend-Recherche", "type": "main", "index": 0 }]]
+    },
+    "Apify – Trend-Recherche": {
+      "main": [[{ "node": "Apify-Treffer aufbereiten", "type": "main", "index": 0 }]]
+    },
+    "Apify-Treffer aufbereiten": {
+      "main": [[{ "node": "Research-Pool: Treffer speichern", "type": "main", "index": 0 }]]
+    },
+    "Research-Pool: Treffer speichern": {
+      "main": [[
+        { "node": "Research-Pool: Neue Einträge", "type": "main", "index": 0 },
+        { "node": "Research-Pool: Learnings", "type": "main", "index": 0 }
+      ]]
+    },
+    "Research-Pool: Neue Einträge": {
+      "main": [[{ "node": "Research + Learnings zusammenführen", "type": "main", "index": 0 }]]
+    },
+    "Research-Pool: Learnings": {
+      "main": [[{ "node": "Research + Learnings zusammenführen", "type": "main", "index": 1 }]]
+    },
+    "Research + Learnings zusammenführen": {
+      "main": [[{ "node": "Prompt-Kontext bauen", "type": "main", "index": 0 }]]
+    },
+    "Prompt-Kontext bauen": {
+      "main": [[{ "node": "Claude – Ideengenerierung", "type": "main", "index": 0 }]]
+    },
+    "Claude – Ideengenerierung": {
+      "main": [[{ "node": "Ideen parsen", "type": "main", "index": 0 }]]
+    },
+    "Ideen parsen": {
+      "main": [[{ "node": "Content-Pipeline: Entwurf anlegen", "type": "main", "index": 0 }]]
+    },
+    "Content-Pipeline: Entwurf anlegen": {
+      "main": [[{ "node": "Claude – Post-Drehbuch", "type": "main", "index": 0 }]]
+    },
+    "Claude – Post-Drehbuch": {
+      "main": [[{ "node": "Drehbuch parsen", "type": "main", "index": 0 }]]
+    },
+    "Drehbuch parsen": {
+      "main": [[{ "node": "Claude – Bildprompt", "type": "main", "index": 0 }]]
+    },
+    "Claude – Bildprompt": {
+      "main": [[{ "node": "GPT Image 2 – Bild erzeugen", "type": "main", "index": 0 }]]
+    },
+    "GPT Image 2 – Bild erzeugen": {
+      "main": [[{ "node": "Format = Video?", "type": "main", "index": 0 }]]
+    },
+    "Format = Video?": {
+      "main": [
+        [{ "node": "ElevenLabs – Voiceover", "type": "main", "index": 0 }],
+        [{ "node": "Content-Pipeline: Zur Freigabe stellen", "type": "main", "index": 0 }]
+      ]
+    },
+    "ElevenLabs – Voiceover": {
+      "main": [[{ "node": "Seedance 2.5 – Video erzeugen", "type": "main", "index": 0 }]]
+    },
+    "Seedance 2.5 – Video erzeugen": {
+      "main": [[{ "node": "Content-Pipeline: Zur Freigabe stellen", "type": "main", "index": 0 }]]
+    },
+    "Täglicher Check: Freigegeben & fällig": {
+      "main": [[{ "node": "Content-Pipeline: Fällige Posts", "type": "main", "index": 0 }]]
+    },
+    "Content-Pipeline: Fällige Posts": {
+      "main": [[{ "node": "LinkedIn – Post veröffentlichen", "type": "main", "index": 0 }]]
+    },
+    "LinkedIn – Post veröffentlichen": {
+      "main": [[{ "node": "Content-Pipeline: Als gepostet markieren", "type": "main", "index": 0 }]]
+    },
+    "Content-Pipeline: Als gepostet markieren": {
+      "main": [[{ "node": "Warten (3 Tage)", "type": "main", "index": 0 }]]
+    },
+    "Warten (3 Tage)": {
+      "main": [[{ "node": "LinkedIn – Kennzahlen abrufen", "type": "main", "index": 0 }]]
+    },
+    "LinkedIn – Kennzahlen abrufen": {
+      "main": [[{ "node": "Performance: letzte 10 Posts", "type": "main", "index": 0 }]]
+    },
+    "Performance: letzte 10 Posts": {
+      "main": [[{ "node": "Durchschnitt berechnen", "type": "main", "index": 0 }]]
+    },
+    "Durchschnitt berechnen": {
+      "main": [[{ "node": "Claude – Lern-Analyse", "type": "main", "index": 0 }]]
+    },
+    "Claude – Lern-Analyse": {
+      "main": [[{ "node": "Analyse parsen", "type": "main", "index": 0 }]]
+    },
+    "Analyse parsen": {
+      "main": [[{ "node": "Performance: Eintrag anlegen", "type": "main", "index": 0 }]]
+    },
+    "Performance: Eintrag anlegen": {
+      "main": [[{ "node": "Research-Pool: Learning speichern", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "instructions": "Import in n8n über 'Import from File'. Danach: (1) Credentials für Notion, Anthropic, Apify, OpenAI, ElevenLabs, Seedance-Anbieter und die LinkedIn-Posting-Bridge anlegen und an den jeweiligen Nodes hinterlegen, (2) System-Prompts aus dem prompts/-Ordner in die entsprechenden Claude-Nodes einfügen, (3) siehe setup-checkliste.md für die empfohlene Test-Reihenfolge."
+  }
+}
