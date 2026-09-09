@@ -134,6 +134,57 @@ async function fetchInsights(mediaId, mediaType, accessToken) {
   }
 }
 
+// Business Discovery: Meta erlaubt damit ausdruecklich, oeffentliche Kennzahlen
+// ANDERER Instagram-Business/Creator-Konten abzufragen (z.B. fuer Wettbewerbs-
+// analysen) - ueber den Access-Token deines eigenen verbundenen Kontos, ohne dass
+// der Wettbewerber irgendetwas freigeben oder sich einloggen muss. Es funktioniert
+// nur, wenn das Zielkonto oeffentlich UND auf Business oder Creator umgestellt ist
+// (bei privaten oder reinen Privat-Konten liefert Meta bewusst keine Daten).
+export async function fetchCompetitorPosts(accessToken, ownIgUserId, competitorUsername) {
+  const mediaFields = 'id,caption,comments_count,like_count,media_type,permalink,timestamp';
+  const discoveryField = `business_discovery.username(${competitorUsername}){username,followers_count,media_count,media.limit(25){${mediaFields}}}`;
+
+  const res = await fetch(`${GRAPH_URL}/${ownIgUserId}?fields=${discoveryField}&access_token=${accessToken}`);
+  if (!res.ok) {
+    const body = await res.text();
+    if (res.status === 400 || res.status === 404) {
+      return {
+        posts: [],
+        warning: `Konto "@${competitorUsername}" wurde nicht gefunden oder ist kein oeffentliches Business-/Creator-Konto - Business Discovery funktioniert nur damit.`,
+      };
+    }
+    return { posts: [], warning: `Instagram-API-Fehler (Business Discovery): ${res.status} ${body}` };
+  }
+  const data = await res.json();
+  const discovery = data.business_discovery;
+  if (!discovery) {
+    return { posts: [], warning: `Keine oeffentlichen Daten fuer @${competitorUsername} verfuegbar.` };
+  }
+  const items = discovery.media?.data ?? [];
+  const posts = items.map((item) => {
+    const caption = item.caption || '';
+    return {
+      externalId: item.id,
+      publishedAt: item.timestamp ? new Date(item.timestamp).getTime() : null,
+      content: caption,
+      mediaType: item.media_type,
+      permalink: item.permalink,
+      likes: item.like_count ?? 0,
+      comments: item.comments_count ?? 0,
+      shares: 0,
+      views: 0,
+      saves: 0,
+      hashtags: extractHashtags(caption),
+      raw: item,
+    };
+  });
+  return {
+    posts,
+    warning: null,
+    accountMeta: { username: discovery.username, followersCount: discovery.followers_count, mediaCount: discovery.media_count },
+  };
+}
+
 function extractHashtags(text) {
   return (text.match(/#[\p{L}0-9_]+/gu) || []).map((h) => h.toLowerCase());
 }

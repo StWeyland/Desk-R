@@ -19,7 +19,34 @@
       <div id="accountCards" class="account-cards"></div>
     </section>
 
+    <section class="card">
+      <h2>Wettbewerber</h2>
+      <p class="muted">
+        Instagram: automatischer Abruf oeffentlicher Kennzahlen ueber die offizielle
+        Business-Discovery-API. LinkedIn und TikTok bieten dafuer keine offizielle
+        Schnittstelle - dort traegst du Zahlen, die du selbst auf dem Profil siehst,
+        manuell ein.
+      </p>
+      <form id="addCompetitorForm" class="inline-form">
+        <select id="competitorPlatform">
+          <option value="instagram">Instagram (automatisch)</option>
+          <option value="linkedin">LinkedIn (manuell)</option>
+          <option value="tiktok">TikTok (manuell)</option>
+        </select>
+        <input id="competitorHandle" type="text" placeholder="Handle / Profilname, z.B. wettbewerber_xy" required />
+        <input id="competitorLabel" type="text" placeholder="Anzeigename (optional)" />
+        <button type="submit" class="btn">Hinzufuegen</button>
+      </form>
+      <div id="competitorList" class="competitor-list"></div>
+    </section>
+
     <section class="summary-cards" id="summaryCards"></section>
+
+    <section class="card">
+      <h3>Du im Vergleich zu Wettbewerbern</h3>
+      <p class="muted">Durchschnittliches Engagement pro Beitrag, gruppiert nach Konto.</p>
+      <canvas id="comparisonChart" height="200"></canvas>
+    </section>
 
     <section class="grid-2">
       <div class="card">
@@ -44,11 +71,19 @@
     </section>
 
     <section class="card">
-      <h3>Top-Beitraege</h3>
+      <div class="section-header">
+        <h3>Top-Beitraege</h3>
+        <select id="scopeFilter">
+          <option value="">Alle</option>
+          <option value="own">Nur meine</option>
+          <option value="competitors">Nur Wettbewerber</option>
+        </select>
+      </div>
       <table id="topPostsTable" class="posts-table">
         <thead>
           <tr>
             <th>Plattform</th>
+            <th>Konto</th>
             <th>Inhalt</th>
             <th>Datum</th>
             <th>Likes</th>

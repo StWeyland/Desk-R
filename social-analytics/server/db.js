@@ -37,9 +37,28 @@ db.exec(`
     synced_at INTEGER NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS competitors (
+    id TEXT PRIMARY KEY,
+    platform TEXT NOT NULL,
+    handle TEXT NOT NULL,
+    label TEXT,
+    tracking_mode TEXT NOT NULL,
+    added_at INTEGER NOT NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_posts_platform ON posts(platform);
   CREATE INDEX IF NOT EXISTS idx_posts_published_at ON posts(published_at);
 `);
+
+// Migration: aeltere Datenbanken hatten "posts" noch ohne diese Spalten.
+const postColumns = db.prepare('PRAGMA table_info(posts)').all().map((c) => c.name);
+if (!postColumns.includes('owner_handle')) {
+  db.exec('ALTER TABLE posts ADD COLUMN owner_handle TEXT');
+}
+if (!postColumns.includes('source')) {
+  db.exec("ALTER TABLE posts ADD COLUMN source TEXT DEFAULT 'api'");
+}
+db.exec('CREATE INDEX IF NOT EXISTS idx_posts_owner ON posts(platform, owner_handle)');
 
 export function saveAccount({ platform, accessToken, refreshToken, expiresAt, accountLabel, meta }) {
   db.prepare(`
@@ -69,10 +88,12 @@ export function deleteAccount(platform) {
   db.prepare('DELETE FROM accounts WHERE platform = ?').run(platform);
 }
 
-export function upsertPosts(platform, posts) {
+// ownerHandle: null/undefined = eigener verbundener Account. Gesetzt = Wettbewerber-Handle.
+// source: 'api' (automatisch abgerufen) oder 'manual' (von Hand eingetragen, z.B. LinkedIn/TikTok-Wettbewerber).
+export function upsertPosts(platform, posts, { ownerHandle = null, source = 'api' } = {}) {
   const stmt = db.prepare(`
-    INSERT INTO posts (id, platform, published_at, content, media_type, permalink, likes, comments, shares, views, saves, hashtags, raw, synced_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO posts (id, platform, published_at, content, media_type, permalink, likes, comments, shares, views, saves, hashtags, raw, synced_at, owner_handle, source)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       published_at = excluded.published_at,
       content = excluded.content,
@@ -85,12 +106,15 @@ export function upsertPosts(platform, posts) {
       saves = excluded.saves,
       hashtags = excluded.hashtags,
       raw = excluded.raw,
-      synced_at = excluded.synced_at
+      synced_at = excluded.synced_at,
+      owner_handle = excluded.owner_handle,
+      source = excluded.source
   `);
   const now = Date.now();
+  const ownerKey = ownerHandle || 'self';
   for (const post of posts) {
     stmt.run(
-      `${platform}:${post.externalId}`,
+      `${platform}:${ownerKey}:${post.externalId}`,
       platform,
       post.publishedAt ?? null,
       post.content ?? '',
@@ -104,19 +128,96 @@ export function upsertPosts(platform, posts) {
       JSON.stringify(post.hashtags ?? []),
       JSON.stringify(post.raw ?? {}),
       now,
+      ownerHandle ?? null,
+      source,
     );
   }
 }
 
-export function getAllPosts({ platform } = {}) {
-  const rows = platform
-    ? db.prepare('SELECT * FROM posts WHERE platform = ? ORDER BY published_at DESC').all(platform)
-    : db.prepare('SELECT * FROM posts ORDER BY published_at DESC').all();
+export function addManualPost(platform, ownerHandle, post) {
+  upsertPosts(
+    platform,
+    [
+      {
+        externalId: post.externalId || `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        publishedAt: post.publishedAt ?? null,
+        content: post.content ?? '',
+        mediaType: post.mediaType ?? null,
+        permalink: post.permalink ?? null,
+        likes: post.likes ?? 0,
+        comments: post.comments ?? 0,
+        shares: post.shares ?? 0,
+        views: post.views ?? 0,
+        saves: post.saves ?? 0,
+        hashtags: extractHashtags(post.content ?? ''),
+        raw: {},
+      },
+    ],
+    { ownerHandle, source: 'manual' },
+  );
+}
+
+function extractHashtags(text) {
+  return (text.match(/#[\p{L}0-9_]+/gu) || []).map((h) => h.toLowerCase());
+}
+
+export function deletePost(id) {
+  db.prepare('DELETE FROM posts WHERE id = ?').run(id);
+}
+
+export function getAllPosts({ platform, ownerHandle, scope } = {}) {
+  const clauses = [];
+  const params = [];
+  if (platform) {
+    clauses.push('platform = ?');
+    params.push(platform);
+  }
+  if (ownerHandle) {
+    clauses.push('owner_handle = ?');
+    params.push(ownerHandle);
+  }
+  if (scope === 'own') clauses.push('owner_handle IS NULL');
+  if (scope === 'competitors') clauses.push('owner_handle IS NOT NULL');
+
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+  const rows = db.prepare(`SELECT * FROM posts ${where} ORDER BY published_at DESC`).all(...params);
   return rows.map((row) => ({
     ...row,
     hashtags: row.hashtags ? JSON.parse(row.hashtags) : [],
     raw: row.raw ? JSON.parse(row.raw) : {},
   }));
+}
+
+// --- Wettbewerber ---
+// trackingMode: 'api' (automatisch, aktuell nur Instagram Business Discovery)
+//               oder 'manual' (LinkedIn/TikTok - Zahlen werden von Hand gepflegt).
+export function addCompetitor({ platform, handle, label, trackingMode }) {
+  const id = `${platform}:${handle}`;
+  db.prepare(`
+    INSERT INTO competitors (id, platform, handle, label, tracking_mode, added_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET label = excluded.label, tracking_mode = excluded.tracking_mode
+  `).run(id, platform, handle, label ?? handle, trackingMode, Date.now());
+  return id;
+}
+
+export function getCompetitors(platform) {
+  const rows = platform
+    ? db.prepare('SELECT * FROM competitors WHERE platform = ? ORDER BY added_at ASC').all(platform)
+    : db.prepare('SELECT * FROM competitors ORDER BY added_at ASC').all();
+  return rows;
+}
+
+export function getCompetitor(id) {
+  return db.prepare('SELECT * FROM competitors WHERE id = ?').get(id) ?? null;
+}
+
+export function removeCompetitor(id) {
+  const competitor = getCompetitor(id);
+  db.prepare('DELETE FROM competitors WHERE id = ?').run(id);
+  if (competitor) {
+    db.prepare('DELETE FROM posts WHERE platform = ? AND owner_handle = ?').run(competitor.platform, competitor.handle);
+  }
 }
 
 export default db;

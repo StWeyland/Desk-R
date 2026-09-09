@@ -1,10 +1,12 @@
 const PLATFORM_LABELS = { linkedin: 'LinkedIn', instagram: 'Instagram', tiktok: 'TikTok' };
 let charts = {};
+let currentScope = '';
 
 async function loadStatus() {
   const res = await fetch('/api/status');
   const { status } = await res.json();
   renderAccountCards(status);
+  return status;
 }
 
 function renderAccountCards(status) {
@@ -69,14 +71,7 @@ async function syncPlatform(platform, btn) {
   try {
     const res = await fetch(`/api/sync/${platform}`, { method: 'POST' });
     const data = await res.json();
-    const warningSlot = document.getElementById(`warning-${platform}`);
-    if (data.warning) {
-      warningSlot.innerHTML = `<div class="warning">${escapeHtml(data.warning)}</div>`;
-    } else if (data.error) {
-      warningSlot.innerHTML = `<div class="warning">${escapeHtml(data.error)}</div>`;
-    } else {
-      warningSlot.innerHTML = '';
-    }
+    showAccountWarning(platform, data.warning || data.error);
     await loadSummary();
   } catch (err) {
     alert(`Sync fehlgeschlagen: ${err.message}`);
@@ -87,19 +82,160 @@ async function syncPlatform(platform, btn) {
   }
 }
 
+function showAccountWarning(platform, message) {
+  const slot = document.getElementById(`warning-${platform}`);
+  if (!slot) return;
+  slot.innerHTML = message ? `<div class="warning">${escapeHtml(message)}</div>` : '';
+}
+
 async function disconnectPlatform(platform) {
   if (!confirm(`${PLATFORM_LABELS[platform]}-Konto wirklich trennen?`)) return;
   await fetch(`/auth/disconnect/${platform}`, { method: 'POST' });
   await loadStatus();
 }
 
+// --- Wettbewerber ---
+
+let competitorTrackingModes = { linkedin: 'manual', instagram: 'api', tiktok: 'manual' };
+
+async function loadCompetitors() {
+  const res = await fetch('/api/competitors');
+  const { competitors } = await res.json();
+  renderCompetitors(competitors);
+}
+
+function renderCompetitors(competitors) {
+  const container = document.getElementById('competitorList');
+  if (!competitors.length) {
+    container.innerHTML = '<div class="muted">Noch keine Wettbewerber hinterlegt.</div>';
+    return;
+  }
+  container.innerHTML = '';
+  for (const c of competitors) {
+    const row = document.createElement('div');
+    row.className = 'competitor-row';
+
+    const info = document.createElement('div');
+    info.className = 'info';
+    info.innerHTML = `
+      <span class="name">${escapeHtml(c.label)} <span class="mode-tag">${PLATFORM_LABELS[c.platform]}</span></span>
+      <span class="muted">@${escapeHtml(c.handle)} - ${c.tracking_mode === 'api' ? 'automatischer Abruf' : 'manuelles Tracking'}</span>
+    `;
+    row.appendChild(info);
+
+    const actions = document.createElement('div');
+    actions.className = 'btn-row';
+
+    if (c.tracking_mode === 'api') {
+      const syncBtn = document.createElement('button');
+      syncBtn.className = 'btn';
+      syncBtn.textContent = 'Abrufen';
+      syncBtn.onclick = async () => {
+        syncBtn.disabled = true;
+        syncBtn.textContent = 'Wird abgerufen...';
+        const res = await fetch(`/api/competitors/${encodeURIComponent(c.id)}/sync`, { method: 'POST' });
+        const data = await res.json();
+        if (data.error) alert(data.error);
+        else if (data.warning) alert(data.warning);
+        syncBtn.disabled = false;
+        syncBtn.textContent = 'Abrufen';
+        await loadSummary();
+      };
+      actions.appendChild(syncBtn);
+    } else {
+      const addPostBtn = document.createElement('button');
+      addPostBtn.className = 'btn secondary';
+      addPostBtn.textContent = 'Beitrag manuell hinzufuegen';
+      addPostBtn.onclick = () => {
+        const form = row.querySelector('.manual-entry-form');
+        form.classList.toggle('open');
+      };
+      actions.appendChild(addPostBtn);
+    }
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'btn danger';
+    removeBtn.textContent = 'Entfernen';
+    removeBtn.onclick = async () => {
+      if (!confirm(`${c.label} wirklich entfernen? Alle gespeicherten Beitraege dazu werden geloescht.`)) return;
+      await fetch(`/api/competitors/${encodeURIComponent(c.id)}`, { method: 'DELETE' });
+      await loadCompetitors();
+      await loadSummary();
+    };
+    actions.appendChild(removeBtn);
+    row.appendChild(actions);
+
+    if (c.tracking_mode === 'manual') {
+      const form = document.createElement('form');
+      form.className = 'manual-entry-form';
+      form.innerHTML = `
+        <input type="text" name="content" placeholder="Beitragstext / Beschreibung" />
+        <input type="url" name="permalink" placeholder="Link zum Beitrag" />
+        <input type="date" name="publishedAt" />
+        <input type="number" name="likes" placeholder="Likes" min="0" />
+        <input type="number" name="comments" placeholder="Kommentare" min="0" />
+        <input type="number" name="shares" placeholder="Shares" min="0" />
+        <input type="number" name="views" placeholder="Views" min="0" />
+        <button type="submit" class="btn">Speichern</button>
+      `;
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const body = Object.fromEntries(fd.entries());
+        const res = await fetch(`/api/competitors/${encodeURIComponent(c.id)}/posts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+        form.reset();
+        form.classList.remove('open');
+        await loadSummary();
+      };
+      row.appendChild(form);
+    }
+
+    container.appendChild(row);
+  }
+}
+
+function initCompetitorForm() {
+  const form = document.getElementById('addCompetitorForm');
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const platform = document.getElementById('competitorPlatform').value;
+    const handle = document.getElementById('competitorHandle').value.trim();
+    const label = document.getElementById('competitorLabel').value.trim();
+    if (!handle) return;
+    const res = await fetch('/api/competitors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform, handle, label }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      alert(data.error);
+      return;
+    }
+    form.reset();
+    await loadCompetitors();
+  };
+}
+
+// --- Analytics ---
+
 async function loadSummary() {
-  const res = await fetch('/api/analytics/summary');
+  const res = await fetch(`/api/analytics/summary${currentScope ? `?scope=${currentScope}` : ''}`);
   const { summary } = await res.json();
   renderSummaryCards(summary);
   renderHourChart(summary.byHour);
   renderWeekdayChart(summary.byWeekday);
   renderPlatformChart(summary.byPlatform);
+  renderComparisonChart(summary.comparison);
   renderHashtags(summary.topHashtags);
   renderTopPosts(summary.topPosts);
 }
@@ -112,7 +248,7 @@ function renderSummaryCards(summary) {
   const cards = [
     { label: 'Beitraege gesamt', value: summary.totalPosts },
     { label: 'Engagement gesamt', value: totalEngagement },
-    { label: 'Plattformen aktiv', value: Object.keys(summary.byPlatform).length },
+    { label: 'Getrackte Konten', value: summary.comparison.length },
   ];
   const container = document.getElementById('summaryCards');
   container.innerHTML = cards
@@ -165,6 +301,33 @@ function renderPlatformChart(byPlatform) {
   });
 }
 
+function renderComparisonChart(comparison) {
+  const ctx = document.getElementById('comparisonChart');
+  charts.comparison?.destroy();
+  if (!comparison.length) {
+    charts.comparison = null;
+    return;
+  }
+  charts.comparison = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: comparison.map((c) => `${c.label} (${PLATFORM_LABELS[c.platform] ?? c.platform})`),
+      datasets: [
+        {
+          label: 'Durchschnittliches Engagement / Beitrag',
+          data: comparison.map((c) => c.avgEngagement),
+          backgroundColor: comparison.map((c) => (c.isOwn ? '#a8743a' : '#6b6b6b')),
+        },
+      ],
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true } },
+    },
+  });
+}
+
 function renderHashtags(topHashtags) {
   const container = document.getElementById('hashtagList');
   if (!topHashtags.length) {
@@ -185,8 +348,10 @@ function renderTopPosts(topPosts) {
       const link = post.permalink
         ? `<a href="${escapeHtml(post.permalink)}" target="_blank" rel="noopener">${escapeHtml(content)}</a>`
         : escapeHtml(content);
+      const ownerPillClass = post.owner_handle ? 'competitor' : 'own';
       return `<tr>
         <td><span class="pill ${post.platform}">${PLATFORM_LABELS[post.platform] ?? post.platform}</span></td>
+        <td><span class="pill ${ownerPillClass}">${escapeHtml(post.ownerLabel || 'Du')}</span></td>
         <td class="content">${link}</td>
         <td>${date}</td>
         <td>${post.likes}</td>
@@ -205,12 +370,23 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function initScopeFilter() {
+  const select = document.getElementById('scopeFilter');
+  select.onchange = () => {
+    currentScope = select.value;
+    loadSummary();
+  };
+}
+
 function init() {
   const params = new URLSearchParams(window.location.search);
   if (params.get('connected')) {
     window.history.replaceState({}, '', '/');
   }
+  initCompetitorForm();
+  initScopeFilter();
   loadStatus();
+  loadCompetitors();
   loadSummary();
 }
 

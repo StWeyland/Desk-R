@@ -3,12 +3,22 @@
 Analysetool, das sich per Live-API direkt mit deinen eigenen LinkedIn-, Instagram-
 und TikTok-Konten verbindet, deine Beitraege abruft und daraus ein Dashboard baut:
 Engagement pro Plattform, beste Uhrzeit/Wochentag zum Posten, meistgenutzte
-Hashtags und deine Top-Beitraege.
+Hashtags und deine Top-Beitraege. Zusaetzlich kannst du Wettbewerber-Konten
+tracken und dich direkt mit ihnen vergleichen.
 
 Wichtig: Keine der drei Plattformen erlaubt das automatisierte Auslesen fremder
-Accounts (Scraping) - das verstoesst gegen ihre Nutzungsbedingungen. Dieses Tool
-nutzt ausschliesslich die offiziellen, autorisierten APIs fuer dein **eigenes**
-Konto, ueber einen OAuth-Login, den du selbst bestaetigst.
+Accounts per Scraping - das verstoesst gegen ihre Nutzungsbedingungen. Dieses
+Tool nutzt ausschliesslich offizielle, autorisierte Wege:
+
+- Fuer dein **eigenes** Konto auf allen drei Plattformen: OAuth-Login, den du
+  selbst bestaetigst.
+- Fuer **Wettbewerber auf Instagram**: die offizielle "Business Discovery"-API,
+  die Meta genau fuer diesen Zweck bereitstellt - oeffentliche Kennzahlen
+  anderer Business-/Creator-Konten, abgerufen ueber deinen eigenen Zugang.
+- Fuer **Wettbewerber auf LinkedIn und TikTok**: Es gibt dort keine offizielle
+  Schnittstelle fuer fremde Konten. Das Tool bietet dafuer ein manuelles
+  Tracking - du traegst Zahlen ein, die du selbst beim Ansehen des oeffentlichen
+  Profils siehst, und das Tool uebernimmt Speicherung, Trends und Vergleich.
 
 ## Setup
 
@@ -73,6 +83,24 @@ deinem eigenen Konto zu verbinden. Es fallen dabei keine Kosten an.
    TikTok die App vorher fuer alle Nutzer freigeben muss.
 5. Client Key / Client Secret in die `.env` kopieren.
 
+## Wettbewerber tracken
+
+Im Bereich "Wettbewerber" im Dashboard ein Konto hinzufuegen (Plattform +
+Handle/Profilname):
+
+- **Instagram**: Klick auf "Abrufen" holt automatisch die neuesten oeffentlichen
+  Beitraege des Wettbewerbers samt Likes/Kommentaren - vorausgesetzt, das Konto
+  ist oeffentlich und auf Business oder Creator umgestellt (bei privaten Konten
+  liefert Meta bewusst keine Daten, das ist so gewollt).
+- **LinkedIn/TikTok**: Klick auf "Beitrag manuell hinzufuegen" oeffnet ein
+  kleines Formular - Text/Link plus die Zahlen, die auf dem Profil sichtbar
+  sind, eintragen und speichern. So laesst sich auch ohne API ein Verlauf
+  aufbauen, den du selbst periodisch pflegst.
+
+Der Vergleich "Du im Vergleich zu Wettbewerbern" zeigt das durchschnittliche
+Engagement pro Beitrag nebeneinander; ueber den Filter bei "Top-Beitraege"
+lassen sich eigene und fremde Beitraege ein- und ausblenden.
+
 ## Funktionsweise
 
 - Beim Klick auf "Verbinden" leitet dich das Tool zum offiziellen Login der
@@ -95,6 +123,12 @@ deinem eigenen Konto zu verbinden. Es fallen dabei keine Kosten an.
 - Zugriffstoken laufen ab (LinkedIn/TikTok i. d. R. 60 Tage, Instagram lang-
   lebige Token ebenfalls ca. 60 Tage). Laeuft ein Token ab, einfach das Konto
   im Dashboard erneut verbinden.
+- **Wettbewerber auf Instagram**: Business Discovery liefert nur oeffentlich
+  sichtbare Zahlen (Likes, Kommentare) - keine Insights wie Reichweite oder
+  Impressions, die Meta nur dem Kontoinhaber selbst zeigt.
+- **Wettbewerber auf LinkedIn/TikTok**: bewusst manuell, weil es dafuer keine
+  autorisierte API gibt. Das ist kein technisches Provisorium, sondern die
+  Grenze, die die Plattformen selbst ziehen.
 
 ## Tech-Stack
 

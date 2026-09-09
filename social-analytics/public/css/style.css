@@ -204,3 +204,98 @@ h2, h3 { margin: 0 0 12px; }
   font-size: 13px;
   margin-top: 8px;
 }
+
+.inline-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.inline-form input, .inline-form select {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+.inline-form input[type="text"] { flex: 1; min-width: 160px; }
+
+.competitor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.competitor-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  flex-wrap: wrap;
+}
+
+.competitor-row .info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.competitor-row .info .name {
+  font-weight: 600;
+}
+
+.mode-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.manual-entry-form {
+  display: none;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  width: 100%;
+}
+.manual-entry-form.open { display: flex; }
+.manual-entry-form input {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+.manual-entry-form input[name="content"] { flex-basis: 100%; }
+.manual-entry-form input[name="likes"],
+.manual-entry-form input[name="comments"],
+.manual-entry-form input[name="shares"],
+.manual-entry-form input[name="views"] { width: 90px; }
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.section-header select {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.pill.own { background: var(--accent); }
+.pill.competitor { background: #6b6b6b; }
