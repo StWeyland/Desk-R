@@ -1,7 +1,6 @@
 .env
 output/**/work/
-character/photos/*
-!character/photos/README.md
+character/
 __pycache__/
 *.pyc
 .pytest_cache/

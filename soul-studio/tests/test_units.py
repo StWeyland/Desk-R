@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from soul_studio.brief import Brief, Slide, format_from_notion, json_schema, normalize   # noqa: E402
+from soul_studio.brief import Block, Brief, Slide, format_from_notion, json_schema, normalize   # noqa: E402
 from soul_studio.captions import build_ass, _chunks                                      # noqa: E402
 from soul_studio.carousel import render_carousel                                          # noqa: E402
 from soul_studio.config import Settings, load_settings                                     # noqa: E402
@@ -97,3 +97,14 @@ def test_carousel_and_images_render(tmp_path):
     img = statement_image(s, "Der Posteingang entscheidet nicht über deinen Tag", "Wer bestimmt die Reihenfolge?", tmp_path / "b.jpg")
     assert img.exists()
     assert end_card(s, tmp_path / "e.png").exists()
+
+
+def test_mixed_mode_forces_talking_hook_and_ending():
+    s = Settings()
+    s.video.mode = "mixed"
+    blocks = [Block(index=i, kind="broll", narration="x", footage_query="q") for i in range(1, 5)]
+    b = normalize(Brief(format="video", title="t", hook="h", caption="c", blocks=blocks), s)
+    assert [x.kind for x in b.blocks] == ["talking", "broll", "broll", "talking"]
+    s.video.mode = "broll_only"
+    b = normalize(Brief(format="video", title="t", hook="h", caption="c", blocks=blocks), s)
+    assert all(x.kind == "broll" for x in b.blocks)

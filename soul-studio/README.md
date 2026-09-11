@@ -15,7 +15,7 @@ Was pro Format entsteht:
 
 | Format in Notion | Ergebnis |
 |---|---|
-| Video, Reel | Hochkant-Video, 30 bis 50 Sekunden: Szenen aus dem Assistenzalltag (Stock-Clips), deine Stimme aus dem Off, große Untertitel, Abspann |
+| Video, Reel | Hochkant-Video, 30 bis 50 Sekunden: du sprichst in die Kamera (aus deinem Foto und deiner Stimme erzeugt), dazwischen Szenen aus dem Assistenzalltag mit deiner Stimme aus dem Off, große Untertitel, Abspann |
 | Carousel | 7 Slides im Marken-Look als PNG und als PDF für LinkedIn |
 | Bild | Statement-Bild 4:5 mit Headline, optional mit Foto |
 | Story | Statement-Bild 9:16 |
@@ -23,24 +23,27 @@ Was pro Format entsteht:
 
 ## Was du einmalig brauchst
 
-Carousel, Bild und Story funktionieren sofort. Für **Videos mit deiner Stimme** braucht die Routine zwei Zugänge:
+Carousel, Bild und Story funktionieren sofort. Für **Videos mit deinem Gesicht und deiner Stimme** braucht die Routine drei Zugänge und ein Foto:
 
 | Zugang | Wofür | Kosten |
 |---|---|---|
-| **ElevenLabs** (elevenlabs.io): Stimme klonen, dann Profil → API Keys | deine Stimme aus dem Off | gratis bis ca. 10 Minuten Sprache im Monat, sonst ab ca. 5 € |
-| **Pexels** (pexels.com/api): kostenlosen API-Key holen | Stock-Clips und Fotos | kostenlos |
+| **fal.ai** (fal.ai → Keys) | macht aus deinem Foto und deiner Stimme das sprechende Video (Modell OmniHuman 1.5) | Bezahlung pro Sekunde, ca. 0,16 $. Ein 40-Sekunden-Video im Standardmodus „mixed“ kostet etwa 3 bis 5 $, nur mit Gesicht etwa 6 $. Kein Abo. |
+| **ElevenLabs** (elevenlabs.io): Stimme klonen, dann Profil → API Keys | deine Stimme | gratis bis ca. 10 Minuten Sprache im Monat, sonst ab ca. 5 € |
+| **Pexels** (pexels.com/api) | Stock-Clips für die Szenen ohne Gesicht, Fotos für Bild-Postings | kostenlos |
+| **Dein Foto** | Notion-Seite „Soul Studio – Dein Foto“: ein bis drei Fotos hochladen, Hinweise stehen auf der Seite | kostenlos |
 
-Diese Werte hinterlegst du in Claude unter *Umgebung → Umgebungsvariablen* (nicht im Code):
+Die Schlüssel hinterlegst du in Claude unter *Umgebung → Umgebungsvariablen* (nicht im Code):
 
 ```
+FAL_KEY=…
 ELEVENLABS_API_KEY=…
 ELEVENLABS_VOICE_ID=…      (die ID deiner geklonten Stimme)
 PEXELS_API_KEY=…
 ```
 
-Außerdem muss die Claude-Umgebung ins Internet dürfen, mindestens zu `api.elevenlabs.io`, `api.pexels.com`, `videos.pexels.com`, `images.pexels.com` (Einstellung *Netzwerk* der Umgebung).
+Außerdem muss die Claude-Umgebung ins Internet dürfen, mindestens zu `fal.run`, `queue.fal.run`, `fal.media`, `api.elevenlabs.io`, `api.pexels.com`, `videos.pexels.com`, `images.pexels.com` und den Notion-Dateiservern (Einstellung *Netzwerk* der Umgebung).
 
-Optional, wenn du statt Stock-Clips KI-generierte Szenen willst (kostet pro Clip): `FAL_KEY` von fal.ai und in `config.yaml` `footage.provider: fal`.
+Videomodus in `config.yaml` → `video.mode`: `mixed` (Standard: Hook und Schluss mit Gesicht, dazwischen Szenen), `talking_head` (nur Gesicht, teurer), `broll_only` (ohne Gesicht, fast kostenlos).
 
 ## Wo was liegt
 
@@ -61,4 +64,4 @@ python -m soul_studio produce beitrag.md       # mit ANTHROPIC_API_KEY: Briefing
 python -m pytest tests -q
 ```
 
-Der Ablauf: Briefing (JSON) → ElevenLabs-Stimme mit Wort-Zeitstempeln → Clip je Block (Pexels oder fal) → ffmpeg-Schnitt mit ASS-Untertiteln in League Spartan, Einblendungen in Playfair, Abspann → `final.mp4`. Carousels und Bilder rendert Pillow direkt.
+Der Ablauf: Briefing (JSON) → ElevenLabs-Stimme mit Wort-Zeitstempeln → Clip je Block (talking: Foto + Stimme über fal.ai OmniHuman; broll: Pexels oder fal Text-zu-Video) → ffmpeg-Schnitt mit ASS-Untertiteln in League Spartan, Einblendungen in Playfair, Abspann → `final.mp4`. Carousels und Bilder rendert Pillow direkt.

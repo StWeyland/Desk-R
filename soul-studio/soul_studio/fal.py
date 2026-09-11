@@ -1,10 +1,12 @@
-"""Optional: KI-generierte Szenen-Clips über fal.ai (Bezahlung pro Clip).
+"""fal.ai: sprechende Videos aus Foto + Stimme (OmniHuman) und optional KI-Szenen-Clips.
 
-Standardmodell: Kling 2.5 Turbo Pro, Text-zu-Video. Modell und Eingabefelder sind in der
-config.yaml unter `fal` einstellbar, damit neue Modelle ohne Codeänderung nutzbar sind.
+Bezahlung pro Sekunde, kein Abo. Modelle und Eingabefelder sind in der config.yaml
+unter `footage` einstellbar, damit neue Modelle ohne Codeänderung nutzbar sind.
 """
 from __future__ import annotations
 
+import base64
+import mimetypes
 import os
 import time
 from pathlib import Path
@@ -83,3 +85,30 @@ def text_to_video(prompt: str, out: Path, model: str, seconds: int, aspect_ratio
             for chunk in r.iter_bytes():
                 f.write(chunk)
     return out
+
+
+def data_uri(path: Path) -> str:
+    """Datei als data:-URI, damit kein Hosting nötig ist (fal akzeptiert das für image_url/audio_url)."""
+    mime = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
+    return f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode()}"
+
+
+def _save(url: str, out: Path) -> Path:
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with httpx.stream("GET", url, timeout=300, follow_redirects=True) as r:
+        r.raise_for_status()
+        with open(out, "wb") as f:
+            for chunk in r.iter_bytes():
+                f.write(chunk)
+    return out
+
+
+def talking_video(photo: Path, audio: Path, out: Path, model: str, extra: dict | None = None) -> Path:
+    """Foto von Steffi + Tonspur → Video, in dem sie den Text spricht (Lippen, Mimik, Gestik)."""
+    payload = {"image_url": data_uri(photo), "audio_url": data_uri(audio)}
+    payload.update(extra or {})
+    result = run(model, payload, timeout_s=1500)
+    url = _first_url(result.get("video") or result)
+    if not url:
+        raise FalError(f"Keine Video-URL im Ergebnis: {str(result)[:400]}")
+    return _save(url, out)

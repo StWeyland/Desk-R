@@ -13,7 +13,9 @@ pip install -q -r requirements.txt
 python -m soul_studio check
 ```
 
-Fehlende Schlüssel notierst du im Abschlussbericht. Carousel, Bild und Story funktionieren immer. Video braucht `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` und `PEXELS_API_KEY`.
+Fehlende Schlüssel notierst du im Abschlussbericht. Carousel, Bild und Story funktionieren immer. Video braucht `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `PEXELS_API_KEY` und `FAL_KEY` sowie Steffis Foto.
+
+**Steffis Foto holen:** Die Fotos liegen auf der Notion-Seite „Soul Studio – Dein Foto“ (URL in `config.yaml` → `character.notion_photo_page`). Hole die Seite mit `notion-fetch`; die Datei-Blöcke enthalten zeitlich begrenzte Download-Links. Lade jedes Foto herunter, z.B. `curl -L -o character/photo_1.jpg "<link>"` (Ordner `soul-studio/character/`, wird nicht committet), und setze vor dem Rendern `export CHARACTER_PHOTOS="character/photo_1.jpg,character/photo_2.jpg"`. Liegt kein Foto auf der Seite, produziere Videos ohne Gesicht (`export VIDEO_MODE=broll_only`) und vermerke in der `Produktions-Notiz`, dass das Foto fehlt.
 
 ## 1. Aufträge holen (Notion)
 
@@ -48,7 +50,7 @@ python -m soul_studio render jobs/<page-id>/brief.json --job jobs/<page-id>/job.
 
 Das Ergebnis steht in `output/<page-id>/result.json` (Feld `media` = Dateipfade, `caption` = Beitragstext). Bei `video`: `final.mp4`. Bei `carousel`: `carousel.pdf` plus `slide_01.png` … Bei `image`/`story`: `final.jpg` bzw. `final_story.jpg`. Bei `none`: nur der Beitragstext.
 
-Schlägt ein Video fehl (z.B. Schlüssel fehlt), produziere stattdessen ein `image` mit dem Hook als Headline und vermerke das in der `Produktions-Notiz`.
+Schlägt ein Video fehl (z.B. Schlüssel fehlt), produziere stattdessen ein `image` mit dem Hook als Headline und vermerke das in der `Produktions-Notiz`. Kosten im Blick: jeder `talking`-Block kostet bei fal.ai etwa 0,16 $ je Sekunde; ein 40-Sekunden-Video im Modus `mixed` liegt bei etwa 3 bis 5 $.
 
 ## 4. Dateien öffentlich erreichbar machen (über das Repository)
 

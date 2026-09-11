@@ -53,8 +53,17 @@ class VoiceConfig(BaseModel):
     speed: float = 1.0
 
 
+class CharacterConfig(BaseModel):
+    """Steffis Gesicht: 1–3 gute Fotos (frontal, ruhiger Hintergrund). Pfade oder Umgebungsvariable CHARACTER_PHOTO_URL."""
+    photos: list[str] = Field(default_factory=list)
+    notion_photo_page: str = ""       # Notion-Seite, auf der die Fotos liegen (die Routine lädt sie von dort)
+
+
 class FootageConfig(BaseModel):
-    provider: Literal["pexels", "fal"] = "pexels"     # pexels = kostenlose Stock-Clips, fal = KI-Clips (bezahlt)
+    provider: Literal["pexels", "fal"] = "pexels"     # B-Roll: pexels = kostenlose Stock-Clips, fal = KI-Clips (bezahlt)
+    talking_model: str = "fal-ai/bytedance/omnihuman/v1.5"   # Foto + Stimme → sprechendes Video (ca. 0,16 $/Sek.)
+    talking_extra: dict = Field(default_factory=lambda: {"resolution": "1080p"})
+    talking_max_seconds: int = 28                     # OmniHuman 1080p: Audio höchstens 30 s je Clip
     fal_model: str = "fal-ai/kling-video/v2.5-turbo/pro/text-to-video"
     fal_seconds: int = 5
     fal_extra: dict = Field(default_factory=lambda: {"cfg_scale": 0.5})
@@ -70,6 +79,7 @@ class VideoConfig(BaseModel):
     height: int = 1920
     fps: int = 30
     target_seconds: int = 40
+    mode: Literal["talking_head", "mixed", "broll_only"] = "mixed"   # mixed = Hook und Schluss mit Gesicht, dazwischen Szenen
     min_blocks: int = 4
     max_blocks: int = 7
     max_words_per_block: int = 22
@@ -117,6 +127,7 @@ class MetricoolConfig(BaseModel):
 
 class Settings(BaseModel):
     brand: BrandConfig = BrandConfig()
+    character: CharacterConfig = CharacterConfig()
     voice: VoiceConfig = VoiceConfig()
     footage: FootageConfig = FootageConfig()
     video: VideoConfig = VideoConfig()
@@ -164,6 +175,11 @@ def load_settings(config_path: Path | None = None) -> Settings:
     settings = Settings.model_validate(data)
     if os.environ.get("ELEVENLABS_VOICE_ID"):
         settings.voice.elevenlabs_voice_id = os.environ["ELEVENLABS_VOICE_ID"]
+    for var in ("CHARACTER_PHOTOS", "CHARACTER_PHOTO_URL"):
+        if os.environ.get(var):
+            settings.character.photos = [u.strip() for u in os.environ[var].split(",") if u.strip()]
+    if os.environ.get("VIDEO_MODE"):
+        settings.video.mode = os.environ["VIDEO_MODE"]  # type: ignore[assignment]
     if os.environ.get("FOOTAGE_PROVIDER"):
         settings.footage.provider = os.environ["FOOTAGE_PROVIDER"]  # type: ignore[assignment]
     if os.environ.get("SOUL_STUDIO_LLM_MODEL"):

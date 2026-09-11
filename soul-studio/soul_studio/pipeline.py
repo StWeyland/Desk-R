@@ -12,6 +12,7 @@ from .brief import Block, Brief, format_from_notion, load_brief, make_brief_via_
 from .carousel import render_carousel
 from .config import Settings
 from .images import placeholder_frame, statement_image
+import httpx
 from .media import duration_seconds, run_ffmpeg
 from .sources import Post
 from .voice import VoiceTake, Word, evenly_timed_words, synthesize
@@ -46,6 +47,28 @@ class Producer:
         self.mock = mock              # ohne Internetdienste: Platzhalter (für Tests)
         self.log = log
         self._used_clips: set[int] = set()
+        self._photos: list[Path] = []
+
+    def _character_photos(self, out_dir: Path) -> list[Path]:
+        """Fotos aus config/ENV laden; URLs werden einmal heruntergeladen."""
+        if self._photos:
+            return self._photos
+        for i, src in enumerate(self.settings.character.photos):
+            if src.startswith("http"):
+                dest = out_dir / f"character_{i + 1}.jpg"
+                if not dest.exists():
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    with httpx.stream("GET", src, timeout=120, follow_redirects=True) as r:
+                        r.raise_for_status()
+                        dest.write_bytes(b"".join(r.iter_bytes()))
+                self._photos.append(dest)
+            else:
+                path = self.settings.path(src)
+                if path.exists():
+                    self._photos.append(path)
+        if not self._photos:
+            raise RuntimeError("Kein Charakterfoto: character.photos in config.yaml oder CHARACTER_PHOTO_URL setzen.")
+        return self._photos
 
     # ------------------------------------------------------------ Briefing
     def brief_for(self, post: Post, out_dir: Path, force_format: str | None = None, reuse: bool = True) -> Brief:
@@ -89,6 +112,11 @@ class Producer:
             run_ffmpeg(["-loop", "1", "-framerate", str(v.fps), "-i", str(frame), "-t", f"{take.seconds + 0.5:.2f}",
                         "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", "-c:v", "libx264", "-pix_fmt", "yuv420p", str(out)])
             return out
+        if block.kind == "talking":
+            from .fal import talking_video
+            photos = self._character_photos(out_dir.parent)
+            photo = photos[(block.index - 1) % len(photos)]
+            return talking_video(photo, take.audio, out, f.talking_model, f.talking_extra)
         if f.provider == "fal":
             from .fal import text_to_video
             prompt = f"{block.scene_prompt or block.footage_query}. {f.style_suffix}"
@@ -120,7 +148,7 @@ class Producer:
                 takes = list(pool.map(lambda b: self._voice(b, work), brief.blocks))
             blocks = []
             for b, take in zip(brief.blocks, takes):
-                self.log(f"  Block {b.index}: Szene ({s.footage.provider}) …")
+                self.log(f"  Block {b.index}: {'Steffi spricht (fal)' if b.kind == 'talking' else 'Szene (' + s.footage.provider + ')'} …")
                 clip = self._clip(b, take, work)
                 blocks.append(BlockMedia(b.index, clip, take.audio, take.seconds, take.words, b.on_screen_text))
             self.log("  Schnitt …")

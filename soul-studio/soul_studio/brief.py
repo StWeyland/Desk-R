@@ -18,6 +18,7 @@ Format = Literal["video", "image", "carousel", "story", "none"]
 
 class Block(BaseModel):
     index: int = Field(description="Laufende Nummer ab 1")
+    kind: Literal["talking", "broll"] = Field(default="broll", description="talking = Steffi spricht in die Kamera; broll = Szene, Stimme aus dem Off")
     narration: str = Field(description="Gesprochener Text auf Deutsch, max. 22 Wörter, natürlich gesprochen")
     footage_query: str = Field(description="2–4 englische Suchwörter für einen Stock-Clip, z.B. 'office inbox laptop morning'")
     scene_prompt: str = Field(default="", description="Englischer Prompt, falls der Clip per KI erzeugt wird")
@@ -72,7 +73,7 @@ def system_prompt(settings: Settings) -> str:
     v = settings.video
     return (text.replace("{{MIN_BLOCKS}}", str(v.min_blocks)).replace("{{MAX_BLOCKS}}", str(v.max_blocks))
             .replace("{{MAX_WORDS}}", str(v.max_words_per_block)).replace("{{TARGET_SECONDS}}", str(v.target_seconds))
-            .replace("{{SLIDES}}", str(settings.carousel.slides)))
+            .replace("{{SLIDES}}", str(settings.carousel.slides)).replace("{{MODE}}", v.mode))
 
 
 def json_schema() -> dict:
@@ -105,6 +106,13 @@ def normalize(brief: Brief, settings: Settings) -> Brief:
         brief.blocks = brief.blocks[: v.max_blocks]
         for i, b in enumerate(brief.blocks, start=1):
             b.index = i
+            if v.mode == "talking_head":
+                b.kind = "talking"
+            elif v.mode == "broll_only":
+                b.kind = "broll"
+        if v.mode == "mixed" and brief.blocks:
+            brief.blocks[0].kind = "talking"
+            brief.blocks[-1].kind = "talking"
             words = b.narration.split()
             if len(words) > v.max_words_per_block + 6:
                 b.narration = " ".join(words[: v.max_words_per_block + 6])
