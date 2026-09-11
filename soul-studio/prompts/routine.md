@@ -50,20 +50,30 @@ Das Ergebnis steht in `output/<page-id>/result.json` (Feld `media` = Dateipfade,
 
 Schlägt ein Video fehl (z.B. Schlüssel fehlt), produziere stattdessen ein `image` mit dem Hook als Headline und vermerke das in der `Produktions-Notiz`.
 
-## 4. In Notion ablegen
+## 4. Dateien öffentlich erreichbar machen (über das Repository)
 
-Für jede Mediendatei: `notion-create-file-upload` (Dateiname) → Datei per `curl` an `upload_url` senden (multipart, Feld `file`, alle `upload_headers` mitschicken) → die zurückgegebene ID in die Eigenschaft `Asset` eintragen (`notion-update-page`, `update_properties`, Wert `[{"type":"file_upload","file_upload":{"id":"<id>"}}]`; bei mehreren Dateien mehrere Einträge). Für ein Carousel lade das PDF und die Slide-PNGs hoch.
+Notion und Metricool holen sich Dateien nur über öffentliche Links. Direkte Uploads aus der Claude-Umgebung sind nicht erlaubt. Deshalb committest du die Ergebnisse ins Repository und nutzt die Raw-Links:
+
+```bash
+git add soul-studio/output/<page-id> soul-studio/jobs/<page-id>
+git -c user.name="Soul Studio" -c user.email="soul-studio@users.noreply.github.com" commit -m "Soul Studio: <Titel>"
+git push origin HEAD:claude/modest-carson-kiigni
+```
+
+Link-Schema: `https://raw.githubusercontent.com/StWeyland/Desk-R/claude/modest-carson-kiigni/soul-studio/output/<page-id>/<datei>`. Prüfe jeden Link mit `curl -sI <link> | head -1` (muss `200` liefern), bevor du weitermachst. Große Videos dauern nach dem Push manchmal eine Minute.
+
+## 5. In Notion ablegen
+
+Für jede Mediendatei `notion-create-attachment` mit `source_url` = Raw-Link und `filename` = Dateiname. Die zurückgegebenen Datei-IDs trägst du in die Eigenschaft `Asset` ein (`notion-update-page`, `update_properties`, Wert `[{"type":"file_upload","file_upload":{"id":"<id>"}}, …]`). Für ein Carousel: das PDF und alle Slide-PNGs.
 
 Dann `notion-update-page` mit:
-- `Entwurfstext` = der fertige Beitragstext aus `result.json` (nur, wenn `Entwurfstext` vorher leer war; sonst unverändert lassen)
+- `Entwurfstext` = der fertige Beitragstext aus `result.json`, nur wenn `Entwurfstext` vorher leer war; sonst unverändert lassen
 - `Produktions-Notiz` = eine Zeile: Format, Anzahl Dateien, Datum, Hinweise
 - `Status` = „Zur Freigabe“
 
-Hänge den Beitragstext und das Briefing zusätzlich als Seiteninhalt an (`insert_content`, Überschrift „Produziert am <Datum>“).
+Hänge den Beitragstext zusätzlich als Seiteninhalt an (`insert_content`, Überschrift „Produziert am <Datum>“, darunter der Beitragstext und die Bilder als Markdown-Links auf die Raw-Links).
 
-## 5. In Metricool zur Freigabe einstellen
-
-Hole dir für die hochgeladenen Dateien öffentliche Download-Links: `notion-fetch` der Seite liefert für `Asset` temporäre URLs. Nutze diese sofort für Metricool.
+## 5b. In Metricool zur Freigabe einstellen
 
 Brand: blogId `6925448`, Zeitzone `Europe/Berlin`, Reviewer `stefanie@deskr.onmicrosoft.com`, approvalSystem `any`.
 
@@ -72,13 +82,13 @@ Datum: `Geplantes Datum` aus Notion um 08:00 Uhr. Liegt kein Datum vor oder ist 
 Tool `createScheduledPostForReview` mit `info` als JSON:
 - `text`: Beitragstext
 - `providers`: aus `platforms` (`linkedin`, `instagram`, `tiktok`)
-- `media`: die Datei-URLs (Carousel auf LinkedIn: alle Slide-PNGs mit `linkedinData: {"documentTitle": "<Titel>", "publishImagesAsPDF": true}`; Instagram-Carousel: die PNGs; Video: die MP4)
-- `instagramData: {"type": "REEL"}` bei Video, sonst `POST`; `tiktokData: {}`; `linkedinData` wie oben oder `{}`
-- `publicationDate: {"dateTime": "...", "timezone": "Europe/Berlin"}`, `draft: false`, `autoPublish: true`
+- `media`: die Raw-Links (Carousel: alle Slide-PNGs in Reihenfolge; auf LinkedIn zusätzlich `linkedinData: {"documentTitle": "<Titel>", "publishImagesAsPDF": true}`; Video: die MP4)
+- `instagramData: {"type": "REEL"}` bei Video, sonst `{"type": "POST"}`; `tiktokData: {}`; `linkedinData` wie oben oder `{}`
+- `publicationDate: {"dateTime": "YYYY-MM-DDTHH:mm:ss", "timezone": "Europe/Berlin"}`, `draft: false`, `autoPublish: true`
 - Format `none` ohne Instagram/TikTok: nur Text an LinkedIn.
 
-Schreibe die zurückgegebene Post-ID in die Notion-Eigenschaft `Metricool-Post-ID` und setze `Status` auf „Geplant“. Schlägt Metricool fehl, bleibt der Status „Zur Freigabe“ und der Fehler kommt in die `Produktions-Notiz`.
+Schreibe die zurückgegebene Post-ID in die Notion-Eigenschaft `Metricool-Post-ID` und setze `Status` auf „Geplant“. Schlägt Metricool fehl (z.B. Plan ohne Freigabe-Funktion), versuche `createScheduledPost` mit `draft: true`; schlägt auch das fehl, bleibt der Status „Zur Freigabe“ und der Fehler kommt in die `Produktions-Notiz`.
 
 ## 6. Abschluss
 
-Keine Commits, kein Push. Fasse am Ende in fünf Zeilen zusammen: verarbeitete Einträge, Formate, was in Metricool liegt, was fehlgeschlagen ist, was Steffi tun muss (z.B. fehlende Schlüssel). Gab es nichts zu tun, genügt ein Satz.
+Fasse am Ende in fünf Zeilen zusammen: verarbeitete Einträge, Formate, was in Metricool liegt, was fehlgeschlagen ist, was Steffi tun muss (z.B. fehlende Schlüssel). Gab es nichts zu tun, genügt ein Satz.

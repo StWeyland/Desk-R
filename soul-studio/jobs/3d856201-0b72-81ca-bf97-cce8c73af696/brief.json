@@ -1,0 +1,18 @@
+{
+  "format": "carousel",
+  "title": "3 Aufgaben für ein digitales Unterstützungssystem",
+  "hook": "Drei Aufgaben, die diese Woche nicht mehr an dir hängen bleiben müssen",
+  "slides": [
+    {"index": 1, "kind": "cover", "headline": "Drei Aufgaben, die diese Woche nicht mehr an dir hängen bleiben müssen", "body": "Ein digitales Unterstützungssystem im Assistenzalltag"},
+    {"index": 2, "kind": "content", "headline": "Terminanfragen sortieren", "body": "Wer will was, bis wann, mit wem? Ein Assistent liest die Anfragen vor und schlägt dir drei passende Zeitfenster vor. Du entscheidest."},
+    {"index": 3, "kind": "content", "headline": "Standardmails vorformulieren", "body": "Bestätigungen, Absagen, Nachfragen. Der erste Entwurf kommt aus dem System. Der Ton kommt von dir."},
+    {"index": 4, "kind": "content", "headline": "Recherche fürs Meeting bündeln", "body": "Drei Quellen, eine Seite, die wichtigsten Punkte oben. Du liest zehn Minuten statt eine Stunde."},
+    {"index": 5, "kind": "content", "headline": "Was bei dir bleibt", "body": "Die Entscheidung, was wirklich wichtig ist. Das nimmt dir kein System ab. Und das ist gut so."},
+    {"index": 6, "kind": "content", "headline": "Dein nächster Schritt", "body": "Gib diese Woche eine dieser Aufgaben testweise ab. Eine reicht. Schau, was sich verändert."},
+    {"index": 7, "kind": "cta", "headline": "Welche Aufgabe gibst du zuerst ab?", "body": "Schreib es in die Kommentare. Ich lese mit."}
+  ],
+  "caption": "Drei Aufgaben, die diese Woche nicht mehr an dir hängen bleiben müssen.\n\nTerminanfragen sortieren.\nStandardmails vorformulieren.\nRecherche fürs Meeting bündeln.\n\nNicht, weil du sie nicht kannst.\nSondern weil dein Kopf für anderes gebraucht wird.\n\nWas bei dir bleibt: die Entscheidung, was wirklich wichtig ist.\n\nGib diese Woche eine dieser Aufgaben testweise ab.\nEine reicht.\n\nWelche wäre es bei dir?",
+  "hashtags": ["assistenz", "executiveassistant", "kiimalltag", "deskrevolution", "officemanagement"],
+  "platforms": ["instagram"],
+  "reasoning_summary": "Carousel laut Rohkonzept, sieben Slides, Situation → Erkenntnis → Schritt."
+}
