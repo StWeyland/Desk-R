@@ -21,9 +21,7 @@ def _load_dotenv(path: Path) -> None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip('"').strip("'")
-        os.environ.setdefault(key, value)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
 class BrandColors(BaseModel):
@@ -45,24 +43,7 @@ class BrandConfig(BaseModel):
     font_body: str = "League Spartan"
 
 
-class CharacterConfig(BaseModel):
-    name: str = "steffi"
-    soul_id: str = ""
-    variant: Literal["soul-2", "soul-cinematic"] = "soul-2"
-    photos_dir: str = "soul-studio/character/photos"
-    look: str = (
-        "a woman in her thirties with a warm, calm and confident expression, "
-        "modern smart-casual business outfit in muted cream and burgundy tones, "
-        "natural make-up, realistic skin, photographic"
-    )
-    setting: str = (
-        "bright modern office or home office, soft daylight, clean desk, laptop, "
-        "warm cream and burgundy accents, shallow depth of field"
-    )
-
-
 class VoiceConfig(BaseModel):
-    provider: Literal["elevenlabs", "higgsfield"] = "elevenlabs"
     elevenlabs_voice_id: str = ""
     elevenlabs_model: str = "eleven_v3"
     language: str = "de"
@@ -70,21 +51,17 @@ class VoiceConfig(BaseModel):
     similarity_boost: float = 0.8
     style: float = 0.2
     speed: float = 1.0
-    higgsfield_voice_id: str = ""
-    higgsfield_voice_type: Literal["preset", "element"] = "preset"
-    higgsfield_variant: str = "elevenlabs"
 
 
-class ModelsConfig(BaseModel):
-    image: str = "text2image_soul_v2"
-    image_quality: str = "2k"
-    talking_video: str = "seedance_2_5"
-    talking_video_mode: str = "std"
-    talking_video_resolution: str = "1080p"
-    broll_video: str = "kling3_0"
-    broll_video_mode: str = "pro"
-    broll_seconds: int = 5
-    still_image: str = "text2image_soul_v2"
+class FootageConfig(BaseModel):
+    provider: Literal["pexels", "fal"] = "pexels"     # pexels = kostenlose Stock-Clips, fal = KI-Clips (bezahlt)
+    fal_model: str = "fal-ai/kling-video/v2.5-turbo/pro/text-to-video"
+    fal_seconds: int = 5
+    fal_extra: dict = Field(default_factory=lambda: {"cfg_scale": 0.5})
+    style_suffix: str = (
+        "cinematic, soft natural daylight, warm cream and burgundy tones, modern office, "
+        "shallow depth of field, slow smooth camera movement, no text, no logos, no faces looking at camera"
+    )
 
 
 class VideoConfig(BaseModel):
@@ -92,17 +69,23 @@ class VideoConfig(BaseModel):
     width: int = 1080
     height: int = 1920
     fps: int = 30
-    target_seconds: int = 45
+    target_seconds: int = 40
     min_blocks: int = 4
     max_blocks: int = 7
     max_words_per_block: int = 22
-    mode: Literal["talking_head", "mixed", "broll_only"] = "mixed"
     captions: Literal["word", "line", "none"] = "word"
     caption_words_per_chunk: int = 3
     end_card_seconds: float = 2.5
     end_card_text: str = "Desk Revolution"
     end_card_sub: str = "Die Zukunft der Assistenzrolle."
-    wait_timeout: str = "20m"
+    music: str = ""                                    # optionaler Pfad zu einer Musikdatei (lizenzfrei)
+    music_volume: float = 0.12
+
+
+class CarouselConfig(BaseModel):
+    slides: int = 7
+    width: int = 1080
+    height: int = 1350
 
 
 class LLMConfig(BaseModel):
@@ -111,51 +94,41 @@ class LLMConfig(BaseModel):
     max_tokens: int = 16000
 
 
-class NotionSourceConfig(BaseModel):
-    database_id: str = ""
+class NotionConfig(BaseModel):
+    database_url: str = "https://app.notion.com/p/9394d55953204b3d88e53cc2f879d9c4"
+    data_source: str = "collection://e2df8581-1dc1-447d-9a80-46e0f2222b6d"
     status_property: str = "Status"
-    ready_value: str = "Video erstellen"
-    done_value: str = "Video erstellt"
-    title_property: str = "Name"
-    text_property: str = "Text"
-
-
-class SourcesConfig(BaseModel):
-    posts_dir: str = "content/posts"
-    extensions: list[str] = Field(default_factory=lambda: [".md", ".txt", ".html"])
-    notion: NotionSourceConfig = NotionSourceConfig()
+    trigger_status: str = "Produzieren"
+    done_status: str = "Zur Freigabe"
+    format_property: str = "Format"
+    text_property: str = "Entwurfstext"
+    asset_property: str = "Asset"
+    note_property: str = "Produktions-Notiz"
 
 
 class MetricoolConfig(BaseModel):
-    user_id: str = ""
-    blog_id: str = ""
-    networks: list[str] = Field(default_factory=lambda: ["tiktok", "instagram"])
+    blog_id: str = "6925448"
     timezone: str = "Europe/Berlin"
-    schedule_offset_hours: int = 24
-    draft: bool = True
-
-
-class PublishConfig(BaseModel):
-    enabled: bool = False
-    public_base_url: str = "https://stweyland.github.io/Desk-R"
-    metricool: MetricoolConfig = MetricoolConfig()
+    reviewer_email: str = "stefanie@deskr.onmicrosoft.com"
+    default_networks: list[str] = Field(default_factory=lambda: ["linkedin"])
+    schedule_offset_days: int = 2
+    schedule_hour: int = 8
 
 
 class Settings(BaseModel):
     brand: BrandConfig = BrandConfig()
-    character: CharacterConfig = CharacterConfig()
     voice: VoiceConfig = VoiceConfig()
-    models: ModelsConfig = ModelsConfig()
+    footage: FootageConfig = FootageConfig()
     video: VideoConfig = VideoConfig()
+    carousel: CarouselConfig = CarouselConfig()
     llm: LLMConfig = LLMConfig()
-    sources: SourcesConfig = SourcesConfig()
-    publish: PublishConfig = PublishConfig()
+    notion: NotionConfig = NotionConfig()
+    metricool: MetricoolConfig = MetricoolConfig()
     output_dir: str = "soul-studio/output"
     state_file: str = "soul-studio/state/processed.json"
     fonts_dir: str = "soul-studio/assets/fonts"
     prompts_dir: str = "soul-studio/prompts"
 
-    # --- Pfade relativ zur Repo-Wurzel auflösen -------------------------
     def path(self, rel: str) -> Path:
         p = Path(rel)
         return p if p.is_absolute() else REPO_ROOT / p
@@ -176,22 +149,9 @@ class Settings(BaseModel):
     def prompts_path(self) -> Path:
         return self.path(self.prompts_dir)
 
-    # --- Secrets aus der Umgebung ---------------------------------------
     @property
     def elevenlabs_api_key(self) -> str:
         return os.environ.get("ELEVENLABS_API_KEY", "")
-
-    @property
-    def notion_token(self) -> str:
-        return os.environ.get("NOTION_TOKEN", "")
-
-    @property
-    def metricool_token(self) -> str:
-        return os.environ.get("METRICOOL_TOKEN", "")
-
-    @property
-    def higgsfield_bin(self) -> str:
-        return os.environ.get("HIGGSFIELD_BIN", "higgsfield")
 
 
 def load_settings(config_path: Path | None = None) -> Settings:
@@ -202,11 +162,10 @@ def load_settings(config_path: Path | None = None) -> Settings:
     if path.exists():
         data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     settings = Settings.model_validate(data)
-    # Umgebungsvariablen dürfen einzelne Werte überschreiben
-    if os.environ.get("SOUL_ID"):
-        settings.character.soul_id = os.environ["SOUL_ID"]
     if os.environ.get("ELEVENLABS_VOICE_ID"):
         settings.voice.elevenlabs_voice_id = os.environ["ELEVENLABS_VOICE_ID"]
+    if os.environ.get("FOOTAGE_PROVIDER"):
+        settings.footage.provider = os.environ["FOOTAGE_PROVIDER"]  # type: ignore[assignment]
     if os.environ.get("SOUL_STUDIO_LLM_MODEL"):
         settings.llm.model = os.environ["SOUL_STUDIO_LLM_MODEL"]
     return settings

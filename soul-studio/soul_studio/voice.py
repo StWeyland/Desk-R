@@ -101,14 +101,8 @@ def elevenlabs_voices(settings: Settings) -> list[dict]:
                 for v in r.json().get("voices", [])]
 
 
-def synthesize(text: str, out: Path, settings: Settings, higgsfield=None) -> VoiceTake:
-    """Wählt den konfigurierten Anbieter."""
-    if settings.voice.provider == "elevenlabs":
-        return elevenlabs_tts(text, out, settings)
-    if higgsfield is None:
-        raise RuntimeError("Higgsfield-Client fehlt für die Sprachausgabe.")
-    path = higgsfield.tts(text, out)
-    return VoiceTake(path, duration_seconds(path), [])
+def synthesize(text: str, out: Path, settings: Settings) -> VoiceTake:
+    return elevenlabs_tts(text, out, settings)
 
 
 def evenly_timed_words(text: str, seconds: float, offset: float = 0.0) -> list[Word]:

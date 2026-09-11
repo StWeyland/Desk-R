@@ -1,19 +1,18 @@
-"""Die eigentliche Produktionsstrecke: Beitrag → Briefing → Bilder/Videos/Stimme → fertiges Video."""
+"""Produktionsstrecke: Briefing → Stimme + Szenen-Clips → Video, oder Carousel / Bild / Story."""
 from __future__ import annotations
 
 import json
 import math
-import shutil
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
 from .assemble import BlockMedia, assemble, cleanup
-from .brief import Block, VideoBrief, load_brief, make_brief, save_brief
+from .brief import Block, Brief, format_from_notion, load_brief, make_brief_via_api, save_brief
+from .carousel import render_carousel
 from .config import Settings
-from .higgsfield import Higgsfield
-from .images import image_post, placeholder_frame
-from .media import duration_seconds
+from .images import placeholder_frame, statement_image
+from .media import duration_seconds, run_ffmpeg
 from .sources import Post
 from .voice import VoiceTake, Word, evenly_timed_words, synthesize
 
@@ -23,170 +22,140 @@ class Result:
     post_id: str
     format: str
     output_dir: Path
-    media: Path | None
+    media: list[Path]
     caption: str
     brief_path: Path
 
-
-TALKING_STYLE = (
-    "She speaks directly to the camera in German with natural, clearly articulated lip movements "
-    "synchronized to the provided audio, calm confident delivery, subtle natural hand gestures, "
-    "gentle head movement, steady eye-level framing, realistic, no on-screen text."
-)
-BROLL_STYLE = "Slow, smooth camera movement, realistic, cinematic natural light, no on-screen text, no logos."
-IMAGE_STYLE = "Photorealistic, natural skin, soft daylight, brand palette of cream, burgundy and warm salmon accents, no text, no logos."
+    def as_dict(self) -> dict:
+        return {"post_id": self.post_id, "format": self.format, "output_dir": str(self.output_dir),
+                "media": [str(m) for m in self.media], "caption": self.caption, "brief": str(self.brief_path)}
 
 
-def _scene_prompt(block: Block, settings: Settings) -> str:
-    look, setting = settings.character.look, settings.character.setting
-    if block.kind == "talking":
-        return f"{block.scene_prompt}. Subject: {look}. Environment: {setting}. {IMAGE_STYLE}"
-    return f"{block.scene_prompt}. {IMAGE_STYLE}"
-
-
-def _video_prompt(block: Block) -> str:
-    return f"{block.scene_prompt}. {TALKING_STYLE if block.kind == 'talking' else BROLL_STYLE}"
-
-
-def _talking_seconds(audio_seconds: float) -> int:
-    return int(min(15, max(4, math.ceil(audio_seconds + 0.6))))
-
-
-def _post_caption(brief: VideoBrief) -> str:
-    tags = " ".join(f"#{h}" for h in brief.hashtags)
-    return f"{brief.caption.strip()}\n\n{tags}".strip()
-
-
-def _write_meta(out_dir: Path, post: Post, brief: VideoBrief, media: Path | None) -> None:
-    (out_dir / "caption.txt").write_text(_post_caption(brief), encoding="utf-8")
-    meta = {
-        "post_id": post.id, "title": post.title, "source": post.source, "path": post.path,
-        "format": brief.format, "media": str(media) if media else None, "hook": brief.hook,
-        "blocks": [b.model_dump() for b in brief.blocks],
-    }
-    (out_dir / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+def _write_meta(out_dir: Path, post: Post, brief: Brief, media: list[Path]) -> None:
+    (out_dir / "caption.txt").write_text(brief.caption_with_tags(), encoding="utf-8")
+    meta = {"post_id": post.id, "title": post.title, "source": post.source, "notion_page_id": post.notion_page_id,
+            "format": brief.format, "media": [str(m) for m in media], "hook": brief.hook,
+            "platforms": brief.platforms, "caption": brief.caption_with_tags()}
+    (out_dir / "result.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 class Producer:
     def __init__(self, settings: Settings, dry_run: bool = False, mock: bool = False, log=print):
         self.settings = settings
         self.dry_run = dry_run
-        self.mock = mock              # ohne Higgsfield/ElevenLabs: Platzhalter (für Tests)
+        self.mock = mock              # ohne Internetdienste: Platzhalter (für Tests)
         self.log = log
-        self.hf = Higgsfield(settings)
+        self._used_clips: set[int] = set()
 
     # ------------------------------------------------------------ Briefing
-    def brief_for(self, post: Post, out_dir: Path, force_format: str | None = None, reuse: bool = True) -> VideoBrief:
+    def brief_for(self, post: Post, out_dir: Path, force_format: str | None = None, reuse: bool = True) -> Brief:
         path = out_dir / "brief.json"
         if reuse and path.exists():
             self.log(f"  Briefing vorhanden: {path}")
-            return load_brief(path)
-        self.log("  Claude schreibt das Briefing …")
-        brief = make_brief(post, self.settings, force_format)
+            return load_brief(path, self.settings)
+        fmt = force_format or format_from_notion(post.notion_format)
+        self.log("  Claude schreibt das Briefing über die API …")
+        brief = make_brief_via_api(post.title, post.text, self.settings, fmt)
         save_brief(brief, path)
         return brief
 
-    # ------------------------------------------------------------ Bausteine
+    # ------------------------------------------------------------ Video-Bausteine
     def _voice(self, block: Block, out_dir: Path) -> VoiceTake:
         out = out_dir / f"voice_{block.index:02d}.mp3"
         words_file = out.with_suffix(".json")
         if out.exists():
             take = VoiceTake(out, duration_seconds(out), [])
-            if words_file.exists():
-                take.words = [Word(**w) for w in json.loads(words_file.read_text(encoding="utf-8"))]
-            else:
-                take.words = evenly_timed_words(block.narration, take.seconds)
+            take.words = ([Word(**w) for w in json.loads(words_file.read_text(encoding="utf-8"))]
+                          if words_file.exists() else evenly_timed_words(block.narration, take.seconds))
             return take
         if self.mock:
-            from .media import run_ffmpeg
             secs = max(2.0, len(block.narration.split()) / 2.3)
             run_ffmpeg(["-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono", "-t", f"{secs:.2f}", str(out)])
             take = VoiceTake(out, secs, evenly_timed_words(block.narration, secs))
         else:
-            take = synthesize(block.narration, out, self.settings, self.hf)
+            take = synthesize(block.narration, out, self.settings)
             if not take.words:
                 take.words = evenly_timed_words(block.narration, take.seconds)
         words_file.write_text(json.dumps([w.__dict__ for w in take.words], ensure_ascii=False), encoding="utf-8")
         return take
 
-    def _image(self, block: Block, out_dir: Path) -> Path:
-        out = out_dir / f"frame_{block.index:02d}.png"
-        if out.exists():
-            return out
-        if self.mock:
-            return placeholder_frame(self.settings, out, f"Block {block.index}")
-        return self.hf.soul_image(_scene_prompt(block, self.settings), self.settings.video.aspect_ratio, out)
-
-    def _video(self, block: Block, frame: Path, take: VoiceTake, out_dir: Path) -> Path:
+    def _clip(self, block: Block, take: VoiceTake, out_dir: Path) -> Path:
         out = out_dir / f"clip_{block.index:02d}.mp4"
         if out.exists():
             return out
+        v, f = self.settings.video, self.settings.footage
         if self.mock:
-            from .media import run_ffmpeg
-            v = self.settings.video
+            frame = placeholder_frame(self.settings, out_dir / f"frame_{block.index:02d}.png", f"Block {block.index}")
             run_ffmpeg(["-loop", "1", "-framerate", str(v.fps), "-i", str(frame), "-t", f"{take.seconds + 0.5:.2f}",
                         "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", "-c:v", "libx264", "-pix_fmt", "yuv420p", str(out)])
             return out
-        if block.kind == "talking":
-            return self.hf.talking_video(_video_prompt(block), frame, take.audio, _talking_seconds(take.seconds), out)
-        secs = max(self.settings.models.broll_seconds, math.ceil(take.seconds))
-        return self.hf.broll_video(_video_prompt(block), frame, min(secs, 10), out)
+        if f.provider == "fal":
+            from .fal import text_to_video
+            prompt = f"{block.scene_prompt or block.footage_query}. {f.style_suffix}"
+            secs = f.fal_seconds if take.seconds <= f.fal_seconds else 10
+            return text_to_video(prompt, out, f.fal_model, secs, v.aspect_ratio, f.fal_extra)
+        from .pexels import search_video
+        path, clip_id = search_video(block.footage_query, out, portrait=v.height > v.width,
+                                     min_seconds=take.seconds, exclude_ids=self._used_clips)
+        self._used_clips.add(clip_id)
+        return path
 
     def _produce_block(self, block: Block, out_dir: Path) -> BlockMedia:
-        self.log(f"  Block {block.index} ({block.kind}): Stimme …")
+        self.log(f"  Block {block.index}: Stimme …")
         take = self._voice(block, out_dir)
-        self.log(f"  Block {block.index}: Bild mit Soul ID …")
-        frame = self._image(block, out_dir)
-        self.log(f"  Block {block.index}: Video …")
-        clip = self._video(block, frame, take, out_dir)
+        self.log(f"  Block {block.index}: Szene ({self.settings.footage.provider}) …")
+        clip = self._clip(block, take, out_dir)
         return BlockMedia(block.index, clip, take.audio, take.seconds, take.words, block.on_screen_text)
 
-    # ------------------------------------------------------------ Produktion
-    def produce(self, post: Post, force_format: str | None = None, parallel: int = 3) -> Result:
+    # ------------------------------------------------------------ Formate
+    def render(self, post: Post, brief: Brief, out_dir: Path, parallel: int = 3) -> Result:
         s = self.settings
-        out_dir = s.output_path / post.slug
+        out_dir.mkdir(parents=True, exist_ok=True)
+        media: list[Path] = []
+        if brief.format == "video":
+            work = out_dir / "work"
+            work.mkdir(exist_ok=True)
+            # Clips nacheinander suchen, damit keine doppelten Stock-Clips entstehen; Stimmen parallel
+            with ThreadPoolExecutor(max_workers=max(1, parallel)) as pool:
+                takes = list(pool.map(lambda b: self._voice(b, work), brief.blocks))
+            blocks = []
+            for b, take in zip(brief.blocks, takes):
+                self.log(f"  Block {b.index}: Szene ({s.footage.provider}) …")
+                clip = self._clip(b, take, work)
+                blocks.append(BlockMedia(b.index, clip, take.audio, take.seconds, take.words, b.on_screen_text))
+            self.log("  Schnitt …")
+            media = [assemble(blocks, s, work / "render", out_dir / "final.mp4")]
+            if not self.mock:
+                cleanup(work / "render")
+        elif brief.format == "carousel":
+            pngs, pdf = render_carousel(brief.slides, s, out_dir)
+            media = [pdf, *pngs]
+        elif brief.format in {"image", "story"}:
+            size = (1080, 1920) if brief.format == "story" else (1080, 1350)
+            photo = None
+            if brief.image_query and not self.mock:
+                try:
+                    from .pexels import search_photo
+                    photo = search_photo(brief.image_query, out_dir / "photo.jpg", portrait=True)
+                except Exception as exc:
+                    self.log(f"  Kein Foto ({exc}); nutze Farbfläche.")
+            media = [statement_image(s, brief.image_headline or brief.hook, brief.image_subline,
+                                     out_dir / ("final_story.jpg" if brief.format == "story" else "final.jpg"),
+                                     size, photo)]
+        else:
+            self.log("  Format „none“: nur Beitragstext, kein Asset.")
+        _write_meta(out_dir, post, brief, media)
+        self.log(f"✔ Fertig: {out_dir}")
+        return Result(post.id, brief.format, out_dir, media, brief.caption_with_tags(), out_dir / "brief.json")
+
+    def produce(self, post: Post, force_format: str | None = None, parallel: int = 3) -> Result:
+        out_dir = self.settings.output_path / post.slug
         out_dir.mkdir(parents=True, exist_ok=True)
         self.log(f"▶ {post.title}  →  {out_dir}")
         brief = self.brief_for(post, out_dir, force_format)
         self.log(f"  Format: {brief.format} · Hook: {brief.hook}")
-
         if self.dry_run:
             self.log("  (Testlauf: keine Generierung)")
-            _write_meta(out_dir, post, brief, None)
-            return Result(post.id, brief.format, out_dir, None, _post_caption(brief), out_dir / "brief.json")
-
-        if brief.format == "image":
-            frame = out_dir / "frame.png"
-            if not frame.exists():
-                if self.mock:
-                    placeholder_frame(s, frame, "Bild")
-                else:
-                    prompt = f"{brief.image_prompt}. Subject: {s.character.look}. {IMAGE_STYLE}"
-                    self.hf.soul_image(prompt, "4:5", frame)
-            final = image_post(s, frame, brief.image_headline or brief.hook, out_dir / "final.jpg")
-            _write_meta(out_dir, post, brief, final)
-            return Result(post.id, "image", out_dir, final, _post_caption(brief), out_dir / "brief.json")
-
-        work = out_dir / "work"
-        work.mkdir(exist_ok=True)
-        with ThreadPoolExecutor(max_workers=max(1, parallel)) as pool:
-            media = list(pool.map(lambda b: self._produce_block(b, work), brief.blocks))
-        self.log("  Schnitt …")
-        final = assemble(media, s, work / "render", out_dir / "final.mp4")
-        _write_meta(out_dir, post, brief, final)
-        if not self.mock:
-            cleanup(work / "render")
-        self.log(f"✔ Fertig: {final}")
-        return Result(post.id, "video", out_dir, final, _post_caption(brief), out_dir / "brief.json")
-
-
-def result_public_url(result: Result, settings: Settings) -> str | None:
-    """Öffentliche URL des Ergebnisses, wenn der Output-Ordner über GitHub Pages ausgeliefert wird."""
-    if not result.media:
-        return None
-    try:
-        rel = result.media.resolve().relative_to(settings.path(".").resolve())
-    except ValueError:
-        return None
-    base = settings.publish.public_base_url.rstrip("/")
-    return f"{base}/{rel.as_posix()}"
+            _write_meta(out_dir, post, brief, [])
+            return Result(post.id, brief.format, out_dir, [], brief.caption_with_tags(), out_dir / "brief.json")
+        return self.render(post, brief, out_dir, parallel)

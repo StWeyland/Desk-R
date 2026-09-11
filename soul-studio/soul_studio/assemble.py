@@ -88,11 +88,21 @@ def assemble(blocks: list[BlockMedia], settings: Settings, workdir: Path, final:
         ass = write_ass(timeline_words, settings, workdir / "captions.ass", overlays)
         fonts = settings.fonts_path.resolve().as_posix()
         filters.append(f"ass={ass.resolve().as_posix()}:fontsdir={fonts}")
+    vf = ",".join(filters)
+    music = settings.path(settings.video.music) if settings.video.music else None
+    audio_chain = "loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000"
     args = ["-i", str(joined)]
-    if filters:
-        args += ["-vf", ",".join(filters)]
-    args += ["-af", "loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000",
-             "-r", str(settings.video.fps), "-fps_mode", "cfr",
+    if music and music.exists():
+        vol = settings.video.music_volume
+        args += ["-stream_loop", "-1", "-i", str(music), "-filter_complex",
+                 (f"[0:v]{vf}[v];" if vf else "[0:v]null[v];")
+                 + f"[1:a]volume={vol}[m];[0:a][m]amix=inputs=2:duration=first:dropout_transition=2,{audio_chain}[a]",
+                 "-map", "[v]", "-map", "[a]"]
+    else:
+        if vf:
+            args += ["-vf", vf]
+        args += ["-af", audio_chain]
+    args += ["-r", str(settings.video.fps), "-fps_mode", "cfr",
              "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
              "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(final)]
     final.parent.mkdir(parents=True, exist_ok=True)
