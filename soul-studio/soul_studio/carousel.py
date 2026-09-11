@@ -46,7 +46,11 @@ def render_slide(slide: Slide, total: int, settings: Settings, out: Path) -> Pat
                 d.text((W * 0.08, y), line, font=sub, fill=hex_to_rgb(c.pale_salmon))
                 y += sub.size * 1.5
         arrow = _font(settings, b.font_body, int(W * 0.03), 700)
-        d.text((W * 0.08, H * 0.86), "WISCHEN  →", font=arrow, fill=accent)
+        d.text((W * 0.08, H * 0.86), "WISCHEN", font=arrow, fill=accent)
+        ax = W * 0.08 + d.textlength("WISCHEN", font=arrow) + W * 0.02
+        ay = H * 0.86 + arrow.size * 0.55
+        d.line([(ax, ay), (ax + W * 0.05, ay)], fill=accent, width=3)
+        d.polygon([(ax + W * 0.05, ay - W * 0.008), (ax + W * 0.06, ay), (ax + W * 0.05, ay + W * 0.008)], fill=accent)
     elif slide.kind == "cta":
         head = _font(settings, b.font_headline, int(W * 0.078), 600)
         body = _font(settings, b.font_body, int(W * 0.036), 500)

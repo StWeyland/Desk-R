@@ -87,7 +87,7 @@ Tool `createScheduledPostForReview` mit `info` als JSON:
 - `publicationDate: {"dateTime": "YYYY-MM-DDTHH:mm:ss", "timezone": "Europe/Berlin"}`, `draft: false`, `autoPublish: true`
 - Format `none` ohne Instagram/TikTok: nur Text an LinkedIn.
 
-Schreibe die zurückgegebene Post-ID in die Notion-Eigenschaft `Metricool-Post-ID` und setze `Status` auf „Geplant“. Schlägt Metricool fehl (z.B. Plan ohne Freigabe-Funktion), versuche `createScheduledPost` mit `draft: true`; schlägt auch das fehl, bleibt der Status „Zur Freigabe“ und der Fehler kommt in die `Produktions-Notiz`.
+Schreibe die zurückgegebene Post-ID in die Notion-Eigenschaft `Metricool-Post-ID` und setze `Status` auf „Geplant“. Hinweis: Steffis Metricool-Tarif hat keine Freigabe-Funktion (Team-Management). Nutze deshalb direkt `createScheduledPost` mit `draft: true` (Entwurf im Planer, Steffi gibt frei). Schlägt das fehl, bleibt der Status „Zur Freigabe“ und der Fehler kommt in die `Produktions-Notiz`.
 
 ## 6. Abschluss
 
