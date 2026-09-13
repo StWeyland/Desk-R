@@ -123,3 +123,25 @@ def test_mixed_mode_forces_talking_hook_and_ending():
     s.video.mode = "broll_only"
     b = normalize(Brief(format="video", title="t", hook="h", caption="c", blocks=blocks), s)
     assert all(x.kind == "broll" for x in b.blocks)
+
+
+def test_needs_manual_generation_without_keys(tmp_path, monkeypatch):
+    from soul_studio.imagegen import NeedsManualGeneration, build_poster_prompt, generate_poster
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("FAL_KEY", raising=False)
+    s = Settings()
+    briefing = "**Thema:**\nTest\n\n**Kernaussage:**\nEin Satz."
+    try:
+        generate_poster(s, briefing, tmp_path / "out.png")
+        assert False, "sollte NeedsManualGeneration auslösen"
+    except NeedsManualGeneration as exc:
+        assert "OPENAI_API_KEY" in exc.reason or "FAL_KEY" in exc.reason
+        assert "Ein Satz." in exc.prompt
+        assert exc.prompt.startswith("# Du bist einer der weltweit besten Creative Directors")
+
+
+def test_build_poster_prompt_includes_master_and_briefing():
+    from soul_studio.imagegen import build_poster_prompt
+    s = Settings()
+    prompt = build_poster_prompt(s, "**Thema:**\nPosteingang")
+    assert "PROJEKTBRIEFING" in prompt and "Posteingang" in prompt and "GRUNDPRINZIP" in prompt

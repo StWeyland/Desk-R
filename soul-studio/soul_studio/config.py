@@ -69,7 +69,8 @@ class FootageConfig(BaseModel):
     talking_extra: dict = Field(default_factory=lambda: {"resolution": "1080p"})
     talking_max_seconds: int = 28                     # OmniHuman 1080p: Audio höchstens 30 s je Clip
     fal_model: str = "fal-ai/kling-video/v2.5-turbo/pro/text-to-video"
-    image_model: str = "fal-ai/nano-banana-pro"              # Editorial-Illustration ohne Gesicht (ca. 0,15 $/Bild)
+    image_provider: Literal["openai", "fal"] = "openai"       # welcher Dienst das Plakat rendert, wenn ein Schlüssel vorhanden ist
+    image_model: str = "fal-ai/nano-banana-pro"              # Editorial-Illustration ohne Gesicht (ca. 0,15 $/Bild), falls provider=fal
     character_image_model: str = "fal-ai/nano-banana-pro/edit"   # Szene MIT Steffis Gesicht (ca. 0,15 $/Bild)
     image_resolution: str = "2K"
     fal_seconds: int = 5

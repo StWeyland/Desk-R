@@ -27,10 +27,14 @@ class Result:
     media: list[Path]
     caption: str
     brief_path: Path
+    needs_manual_prompt: Path | None = None   # gesetzt, wenn das Bild noch von Hand erzeugt werden muss
 
     def as_dict(self) -> dict:
-        return {"post_id": self.post_id, "format": self.format, "output_dir": str(self.output_dir),
-                "media": [str(m) for m in self.media], "caption": self.caption, "brief": str(self.brief_path)}
+        d = {"post_id": self.post_id, "format": self.format, "output_dir": str(self.output_dir),
+             "media": [str(m) for m in self.media], "caption": self.caption, "brief": str(self.brief_path)}
+        if self.needs_manual_prompt:
+            d["needs_manual_prompt"] = str(self.needs_manual_prompt)
+        return d
 
 
 def _write_meta(out_dir: Path, post: Post, brief: Brief, media: list[Path]) -> None:
@@ -168,13 +172,30 @@ class Producer:
                 self.log(f"  Kein Foto ({exc}); nutze Farbfläche.")
         return None
 
-    def _image_post(self, brief: Brief, out_dir: Path, out_file: Path, size: tuple[int, int]) -> Path:
+    def _image_post(self, brief: Brief, out_dir: Path, out_file: Path, size: tuple[int, int]
+                    ) -> tuple[Path | None, Path | None]:
+        """Gibt (Bilddatei, Prompt-Textdatei) zurück – genau eine der beiden ist gesetzt.
+        editorial: Steffis Creative-Director-Plakat (per API, sonst Prompt als Text zum Einfügen in ChatGPT).
+        character: Foto-Szene mit Steffis Gesicht, danach Headline/Fließtext per Vorlage darüber."""
+        if brief.image_mode == "editorial" and brief.poster_briefing:
+            if self.mock:
+                return placeholder_frame(self.settings, out_file, "Plakat"), None
+            from .imagegen import NeedsManualGeneration, generate_poster
+            aspect = "1:1" if size[0] == size[1] else "9:16"
+            try:
+                result = generate_poster(self.settings, brief.poster_briefing, out_file, aspect)
+                return result.path, None
+            except NeedsManualGeneration as exc:
+                self.log(f"  Kein automatischer Bildzugang ({exc.reason}). Prompt wird als Text abgelegt.")
+                prompt_file = out_dir / "bild_prompt.txt"
+                prompt_file.write_text(exc.prompt, encoding="utf-8")
+                return None, prompt_file
         scene = self._scene_for_image(brief, out_dir)
         headline = brief.image_headline or brief.hook
         body = brief.image_body
         if scene is not None:
-            return editorial_card(self.settings, scene, headline, body, out_file, size)
-        return statement_image(self.settings, headline, body, out_file, size, None)
+            return editorial_card(self.settings, scene, headline, body, out_file, size), None
+        return statement_image(self.settings, headline, body, out_file, size, None), None
 
     def render(self, post: Post, brief: Brief, out_dir: Path, parallel: int = 3) -> Result:
         s = self.settings
@@ -201,7 +222,12 @@ class Producer:
         elif brief.format in {"image", "story"}:
             size = (1080, 1920) if brief.format == "story" else (1080, 1350)
             out_file = out_dir / ("final_story.jpg" if brief.format == "story" else "final.jpg")
-            media = [self._image_post(brief, out_dir, out_file, size)]
+            image_path, prompt_path = self._image_post(brief, out_dir, out_file, size)
+            media = [image_path] if image_path else []
+            if prompt_path:
+                _write_meta(out_dir, post, brief, [])
+                return Result(post.id, "image", out_dir, [], brief.caption_with_tags(), out_dir / "brief.json",
+                             needs_manual_prompt=prompt_path)
         else:
             self.log("  Format „none“: nur Beitragstext, kein Asset.")
         _write_meta(out_dir, post, brief, media)

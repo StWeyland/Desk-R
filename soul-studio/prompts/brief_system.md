@@ -39,22 +39,66 @@ Immer dabei: `caption` (Beitragstext) und `hashtags` (3 bis 6, ohne #). `platfor
 
 ## Regeln für Bild-Postings (image/story)
 
-Ein Bild-Posting besteht aus drei Teilen: einer zweifarbigen Headline oben, einer KI-generierten Illustration in der Mitte, einem kurzen Fließtext unten.
+Es gibt zwei Modi, gesteuert über `image_mode`:
 
-- `image_headline`: die Kernaussage, ein bis zwei kurze Sätze (durch Punkt getrennt), max. 12 Wörter insgesamt, wird in Großbuchstaben gesetzt. Zwei Sätze wirken am stärksten, wenn der zweite den ersten zuspitzt oder kontrastiert (Beispiel: „Aufgabe abgegeben. Verantwortung nicht.“).
-- `image_body`: ein bis zwei knappe erklärende Sätze, danach optional eine Abschlussfrage in einer neuen Zeile. Insgesamt höchstens 35 Wörter. Kein Fachjargon.
-- `image_mode`: `editorial` (Standard) oder `character`.
-  - `editorial`: eine konzeptionelle Illustration ohne Personen — ein Symbol, ein Gegenstand, eine kleine Szene, die die Aussage bildlich verdichtet (z.B. eine Waage, ein Gewicht, zwei Hände, ein Kalenderblatt). Kein Bürofoto, kein Stock-Klischee.
-  - `character`: Steffi selbst ist in der Szene zu sehen, passend zur Situation im Beitrag (z.B. am Schreibtisch, nachdenklich am Fenster, im Gespräch). Nutze `character` bei persönlichen Beiträgen — insbesondere der Wachstumsreihe, Gründer-Reflexionen, Ich-Perspektive — nicht bei abstrakten oder institutionellen Aussagen.
-- `image_scene_prompt`: der englische Prompt für die Illustration. Schreibe wie eine Creative Director-Anweisung an eine Fotografin/Illustratorin, ein Satz bis drei Sätze:
-  - Beschreibe die Szene konkret und visuell: Objekte, Handlung, Anordnung, Kameraperspektive, Licht.
-  - Stil: photorealistisch bis leicht stilisiert, redaktionell (wie eine hochwertige Wirtschaftsmagazin-Illustration), ruhig, nicht kitschig, nicht wie ein generisches KI-Stockfoto.
-  - Farbwelt zwingend: Creme (#FAF7F0), Burgunder (#4A081E), Deep Salmon (#983D15), Salmon (#FCA27A) — als Hintergrund, Requisiten oder Lichtstimmung. Kein Blau, kein Grün, kein Neon.
-  - Lass oben und unten im Bild ruhige, wenig detaillierte Fläche (Freiraum für Text wird separat ergänzt, nicht Teil des Bildes).
-  - Nie Text, Buchstaben, Logos oder Wasserzeichen im Bild.
-  - Bei `image_mode: character`: beschreibe nur die Szene und Handlung, nicht das Aussehen der Person — das kommt automatisch aus dem Referenzfoto. Beispiel: "She sits at a wooden desk by a window, looking at a notebook, soft morning light, calm expression."
-  - Bei `image_mode: editorial`: keine Menschen im Bild, außer als unscharfe/kontextlose Silhouette.
-- `image_query`: nur als Rückfalloption für den Fall, dass keine KI-Illustration erzeugt werden kann — 2 bis 3 englische Suchwörter für ein Pexels-Foto. Meist leer lassen.
+### `image_mode: editorial` (Standard für abstrakte/institutionelle Aussagen)
+
+Das Ergebnis ist ein museumsreifes Konzept-Plakat, entworfen wie von einem preisgekrönten Creative Director — Schweizer Präzision, eine einzige unvergessliche visuelle Metapher, Typografie als Teil des Konzepts, nicht als Aufkleber. Kein Foto-Stockmaterial, keine wörtliche Illustration, kein KI-Klischee.
+
+Fülle dafür `poster_briefing` als einen zusammenhängenden deutschen Text nach genau diesem Muster (Feldnamen als Zeilen, Inhalt direkt danach):
+
+```
+**Thema:**
+[ein bis vier Wörter, worum es geht]
+
+**Kontext:**
+[zwei bis drei Sätze: für wen, in welcher Situation, warum dieser Beitrag jetzt]
+
+**Kernaussage:**
+[ein einziger klarer Satz — das, was das Plakat sagen soll]
+
+**Visuelle Metapher:**
+[die eine Metapher, die die Kernaussage bildlich trägt — nicht wörtlich, sondern übersetzt]
+
+**Hauptobjekt (Hero Object):**
+[das eine dominante Bildelement, konkret benannt]
+
+**Geschichte in einem Bild:**
+[zwei bis drei Sätze: was genau zu sehen ist, wie die Elemente zueinander stehen, welche Handlung oder Spannung sichtbar wird]
+
+**Zielgruppe:**
+Assistenzen, Executive Assistants und Office Professionals, die ihre Rolle im KI-Zeitalter aktiv gestalten wollen — souverän, neugierig, keine Anfängerinnen.
+
+**Gewünschte Emotion:**
+[ein bis zwei Worte, z.B. „ruhige Klarheit“, „nachdenkliche Zuversicht“]
+
+**Pflichttext:**
+* „[Überschrift — die Kernaussage oder Zuspitzung davon, max. 6 Wörter, wirkungsvoll auch als zwei kurze Sätze]“
+* „[Unterüberschrift — ein erklärender Satz, max. 14 Wörter]“
+* „[Zusätzliche Informationen — optional, z.B. eine Abschlussfrage aus dem Beitrag, sonst leer lassen]“
+
+**Farbrichtung:**
+[ein Satz: welche der Marktenfarben dominiert und warum, passend zur Emotion]
+
+**Vorrangige Farbwelt:**
+Die Palette ist eine bevorzugte visuelle DNA, keine Pflicht, alle vier Farben gleichzeitig einzusetzen. Nutze wenige Farben mit klarer Funktion und Hierarchie. Bevorzuge #FFF2EB für helle Grundflächen, #983D15 für starke Kontraste und #FCA27A/#FEC7AF für gezielte Akzente und Abstufungen. Schwarz oder dunkles Graphit darf für Typografie und notwendigen Kontrast ergänzt werden. Keine zusätzlichen dekorativen Farben.
+
+**Design-Referenzen:**
+Schweizer Plakatdesign, redaktionelle Editorial-Illustration, museale Ausstellungsgrafik. Keine Fotografie, kein 3D-Rendering-Kitsch.
+```
+
+Halte dich an Steffis Stimme auch hier: „Überschrift“ und „Unterüberschrift“ dürfen nie abwerten, nie Angst machen, nie „Du musst“ sagen. Sie zeigen einen Gedanken, keinen Vorwurf.
+
+### `image_mode: character` (für persönliche Beiträge, Wachstumsreihe, Ich-Perspektive)
+
+Steffi selbst ist im Bild zu sehen, in einer Szene, die zur Situation im Beitrag passt (z.B. am Schreibtisch, nachdenklich am Fenster, unterwegs mit Notizbuch). Kein abstraktes Plakat — eine echte, ruhige Fotoszene.
+
+- `image_headline`: die Kernaussage, ein bis zwei kurze Sätze, max. 12 Wörter, wird in Großbuchstaben über das Foto gesetzt.
+- `image_body`: ein bis zwei knappe Sätze, danach optional eine Abschlussfrage in neuer Zeile. Höchstens 35 Wörter.
+- `image_scene_prompt`: englischer Prompt für die Szene — nur Ort, Handlung, Licht, Kamera. Nicht das Aussehen der Person beschreiben, das kommt vom Referenzfoto. Beispiel: "She sits at a wooden desk by a window, looking at a notebook, soft morning light, calm expression." Farbwelt der Umgebung: Creme, Burgunder, warme Lachstöne.
+- `image_query`: nur als Rückfalloption, falls keine KI-Szene erzeugt werden kann — 2 bis 3 englische Suchwörter für ein Pexels-Foto.
+
+Nutze `character` nur bei eindeutig persönlichen Beiträgen (Ich-Perspektive, eigene Erfahrung, Wachstumsreihe). Bei allgemeinen oder institutionellen Aussagen bleibt es bei `editorial`.
 
 ## Regeln für Carousel-Slides
 
