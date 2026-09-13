@@ -126,3 +126,94 @@ def placeholder_frame(settings: Settings, out: Path, label: str = "") -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
     img.save(out)
     return out
+
+
+def _rounded(img: Image.Image, radius: int) -> Image.Image:
+    mask = Image.new("L", img.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, img.size[0], img.size[1]], radius=radius, fill=255)
+    out = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    out.paste(img.convert("RGB"), (0, 0), mask)
+    return out
+
+
+def editorial_card(settings: Settings, scene: Path, headline: str, body: str, out: Path,
+                   size: tuple[int, int] = (1080, 1350)) -> Path:
+    """Hook-Karte im DeskR-Look: zweifarbige Caps-Headline oben, Illustration/Szene in der Mitte,
+    kurzer Fließtext plus Frage unten. Die Illustration kommt aus fal.ai (editorial oder mit Steffis Gesicht)."""
+    c, b = settings.brand.colors, settings.brand
+    W, H = size
+    img = Image.new("RGB", (W, H), hex_to_rgb(c.cream))
+    d = ImageDraw.Draw(img)
+    margin = int(W * 0.08)
+    max_width = W - 2 * margin
+
+    # Headline: bis zu zwei farbige Sätze (Trennung an ". " / "! " / "? ")
+    buf, parts = headline.strip(), []
+    for sep in (". ", "! ", "? "):
+        if sep in buf:
+            i = buf.index(sep)
+            parts = [buf[: i + 1].strip(), buf[i + 1:].strip()]
+            break
+    if not parts:
+        parts = [buf]
+    parts = [p for p in parts if p]
+    colors = [hex_to_rgb(c.burgundy), hex_to_rgb(c.deep_salmon)]
+
+    # Headline-Schriftgröße wählen: so groß wie möglich, aber höchstens 4 Zeilen insgesamt
+    head_top, head_max_h = H * 0.055, H * 0.30
+    for size_frac in (0.088, 0.078, 0.068, 0.058, 0.05, 0.044):
+        head_font = _font(settings, b.font_body, int(W * size_frac), 800)
+        line_h = head_font.size * 1.08
+        total_lines = sum(len(_wrap(d, part.upper(), head_font, max_width)) for part in parts)
+        if total_lines * line_h <= head_max_h or size_frac == 0.044:
+            break
+
+    y = head_top
+    for i, part in enumerate(parts):
+        for line in _wrap(d, part.upper(), head_font, max_width):
+            d.text((margin, y), line, font=head_font, fill=colors[i % 2])
+            y += line_h
+        y += H * 0.006
+    head_bottom = y + H * 0.018
+
+    # Fußzeile fest am unteren Rand; Fließtext-Block bekommt den Rest
+    footer_font = _font(settings, b.font_body, int(W * 0.026), 700)
+    footer_y = H * 0.955
+    body_bottom_max = footer_y - H * 0.025
+
+    # Illustration: feste Höhe, direkt unter der Headline
+    scene_h = min(H * 0.40, (body_bottom_max - head_bottom) * 0.62)
+    scene_y = head_bottom
+    scene_img = Image.open(scene).convert("RGB")
+    sw, sh = scene_img.size
+    scale = max(max_width / sw, scene_h / sh)
+    scene_img = scene_img.resize((round(sw * scale), round(sh * scale)), Image.LANCZOS)
+    left, top = (scene_img.width - max_width) // 2, (scene_img.height - int(scene_h)) // 2
+    scene_img = scene_img.crop((left, top, left + max_width, top + int(scene_h)))
+    rounded = _rounded(scene_img, int(W * 0.02))
+    img.paste(rounded, (margin, int(scene_y)), rounded)
+
+    # Fließtext: Schriftgröße wählen, damit er zwischen Illustration und Fußzeile passt
+    line_y0 = scene_y + scene_h + H * 0.04
+    body_max_h = body_bottom_max - line_y0 - H * 0.018
+    paragraphs = [p.strip() for p in body.split("\n") if p.strip()]
+    for size_frac in (0.036, 0.032, 0.028, 0.025, 0.022):
+        body_font = _font(settings, b.font_body, int(W * size_frac), 500)
+        line_h2 = body_font.size * 1.4
+        n_lines = sum(len(_wrap(d, para, body_font, max_width)) for para in paragraphs)
+        gaps = max(0, len(paragraphs) - 1) * H * 0.014
+        if n_lines * line_h2 + gaps <= body_max_h or size_frac == 0.022:
+            break
+
+    d.line([(margin, line_y0), (margin + W * 0.12, line_y0)], fill=hex_to_rgb(c.salmon), width=4)
+    ty = line_y0 + H * 0.028
+    for para in paragraphs:
+        for line in _wrap(d, para, body_font, max_width):
+            d.text((margin, ty), line, font=body_font, fill=hex_to_rgb(c.burgundy))
+            ty += line_h2
+        ty += H * 0.014
+
+    d.text((margin, footer_y), f"{b.name.upper()}   \u00b7   {b.handle}", font=footer_font, fill=hex_to_rgb(c.deep_salmon))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    img.save(out, quality=95)
+    return out

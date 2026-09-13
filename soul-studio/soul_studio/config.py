@@ -57,6 +57,10 @@ class CharacterConfig(BaseModel):
     """Steffis Gesicht: 1–3 gute Fotos (frontal, ruhiger Hintergrund). Pfade oder Umgebungsvariable CHARACTER_PHOTO_URL."""
     photos: list[str] = Field(default_factory=list)
     notion_photo_page: str = ""       # Notion-Seite, auf der die Fotos liegen (die Routine lädt sie von dort)
+    look: str = (
+        "a woman in her thirties with a warm, calm and confident expression, "
+        "modern smart-casual business outfit in muted cream and burgundy tones, natural, photographic"
+    )
 
 
 class FootageConfig(BaseModel):
@@ -65,6 +69,9 @@ class FootageConfig(BaseModel):
     talking_extra: dict = Field(default_factory=lambda: {"resolution": "1080p"})
     talking_max_seconds: int = 28                     # OmniHuman 1080p: Audio höchstens 30 s je Clip
     fal_model: str = "fal-ai/kling-video/v2.5-turbo/pro/text-to-video"
+    image_model: str = "fal-ai/nano-banana-pro"              # Editorial-Illustration ohne Gesicht (ca. 0,15 $/Bild)
+    character_image_model: str = "fal-ai/nano-banana-pro/edit"   # Szene MIT Steffis Gesicht (ca. 0,15 $/Bild)
+    image_resolution: str = "2K"
     fal_seconds: int = 5
     fal_extra: dict = Field(default_factory=lambda: {"cfg_scale": 0.5})
     style_suffix: str = (

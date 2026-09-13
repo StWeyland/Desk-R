@@ -112,3 +112,21 @@ def talking_video(photo: Path, audio: Path, out: Path, model: str, extra: dict |
     if not url:
         raise FalError(f"Keine Video-URL im Ergebnis: {str(result)[:400]}")
     return _save(url, out)
+
+
+def generate_image(prompt: str, out: Path, model: str, aspect_ratio: str = "4:5",
+                   image_urls: list[str] | None = None, extra: dict | None = None) -> Path:
+    """Bildgenerierung (Illustration ohne Gesicht) oder Bildbearbeitung mit Referenzfotos
+    (für Szenen mit Steffis Gesicht). `image_urls` gesetzt → Edit-Modus (z.B. nano-banana-pro/edit)."""
+    payload: dict = {"prompt": prompt, "num_images": 1, "output_format": "png"}
+    if aspect_ratio:
+        payload["aspect_ratio"] = aspect_ratio
+    if image_urls:
+        payload["image_urls"] = image_urls
+    payload.update(extra or {})
+    result = run(model, payload, timeout_s=180)
+    images = result.get("images") or []
+    url = images[0]["url"] if images and isinstance(images[0], dict) else _first_url(result)
+    if not url:
+        raise FalError(f"Keine Bild-URL im Ergebnis: {str(result)[:400]}")
+    return _save(url, out)

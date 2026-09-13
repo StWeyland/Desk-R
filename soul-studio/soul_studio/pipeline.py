@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,7 +12,7 @@ from .assemble import BlockMedia, assemble, cleanup
 from .brief import Block, Brief, format_from_notion, load_brief, make_brief_via_api, save_brief
 from .carousel import render_carousel
 from .config import Settings
-from .images import placeholder_frame, statement_image
+from .images import editorial_card, placeholder_frame, statement_image
 import httpx
 from .media import duration_seconds, run_ffmpeg
 from .sources import Post
@@ -136,6 +137,45 @@ class Producer:
         return BlockMedia(block.index, clip, take.audio, take.seconds, take.words, block.on_screen_text)
 
     # ------------------------------------------------------------ Formate
+    def _scene_for_image(self, brief: Brief, out_dir: Path) -> Path | None:
+        """Erzeugt die Illustration/Szene über fal.ai (editorial oder mit Steffis Gesicht).
+        Ohne FAL_KEY oder im Testlauf: Pexels-Foto (falls image_query gesetzt) oder None (Farbfläche)."""
+        scene = out_dir / "scene.png"
+        if scene.exists():
+            return scene
+        if self.mock:
+            return placeholder_frame(self.settings, scene, "Szene")
+        f = self.settings.footage
+        if os.environ.get("FAL_KEY"):
+            from .fal import data_uri, generate_image
+            try:
+                if brief.image_mode == "character":
+                    photos = self._character_photos(out_dir)
+                    urls = [data_uri(p) for p in photos]
+                    prompt = f"{brief.image_scene_prompt}. Subject: {self.settings.character.look}. No text, no logos."
+                    return generate_image(prompt, scene, f.character_image_model, aspect_ratio="4:5",
+                                          image_urls=urls, extra={"resolution": f.image_resolution})
+                prompt = f"{brief.image_scene_prompt}. No text, no logos, no watermark."
+                return generate_image(prompt, scene, f.image_model, aspect_ratio="4:5",
+                                      extra={"resolution": f.image_resolution})
+            except Exception as exc:
+                self.log(f"  fal-Bild fehlgeschlagen ({exc}); weiche aus.")
+        if brief.image_query:
+            try:
+                from .pexels import search_photo
+                return search_photo(brief.image_query, scene, portrait=True)
+            except Exception as exc:
+                self.log(f"  Kein Foto ({exc}); nutze Farbfläche.")
+        return None
+
+    def _image_post(self, brief: Brief, out_dir: Path, out_file: Path, size: tuple[int, int]) -> Path:
+        scene = self._scene_for_image(brief, out_dir)
+        headline = brief.image_headline or brief.hook
+        body = brief.image_body
+        if scene is not None:
+            return editorial_card(self.settings, scene, headline, body, out_file, size)
+        return statement_image(self.settings, headline, body, out_file, size, None)
+
     def render(self, post: Post, brief: Brief, out_dir: Path, parallel: int = 3) -> Result:
         s = self.settings
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -160,16 +200,8 @@ class Producer:
             media = [pdf, *pngs]
         elif brief.format in {"image", "story"}:
             size = (1080, 1920) if brief.format == "story" else (1080, 1350)
-            photo = None
-            if brief.image_query and not self.mock:
-                try:
-                    from .pexels import search_photo
-                    photo = search_photo(brief.image_query, out_dir / "photo.jpg", portrait=True)
-                except Exception as exc:
-                    self.log(f"  Kein Foto ({exc}); nutze Farbfläche.")
-            media = [statement_image(s, brief.image_headline or brief.hook, brief.image_subline,
-                                     out_dir / ("final_story.jpg" if brief.format == "story" else "final.jpg"),
-                                     size, photo)]
+            out_file = out_dir / ("final_story.jpg" if brief.format == "story" else "final.jpg")
+            media = [self._image_post(brief, out_dir, out_file, size)]
         else:
             self.log("  Format „none“: nur Beitragstext, kein Asset.")
         _write_meta(out_dir, post, brief, media)

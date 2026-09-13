@@ -10,6 +10,9 @@ brand:
 character:
   photos: []                       # 1–3 Fotos von Steffi (Dateipfade) oder Umgebungsvariable CHARACTER_PHOTO_URL (Links, kommagetrennt)
   notion_photo_page: https://app.notion.com/p/3d8562010b7281c0b27bfe054787c8e9   # „Soul Studio – Dein Foto“; die Routine lädt die Fotos von dort
+  look: >-
+    a woman in her thirties with a warm, calm and confident expression,
+    modern smart-casual business outfit in muted cream and burgundy tones, natural, photographic
 
 voice:
   elevenlabs_voice_id: ""          # oder Umgebungsvariable ELEVENLABS_VOICE_ID
@@ -24,7 +27,10 @@ footage:
   talking_model: fal-ai/bytedance/omnihuman/v1.5   # Foto + Stimme → Steffi spricht (fal.ai, ca. 0,16 $ je Sekunde)
   talking_extra: {resolution: "1080p"}
   talking_max_seconds: 28
-  provider: pexels                 # Szenen ohne Gesicht: pexels = kostenlose Stock-Clips (Standard) · fal = KI-Clips, bezahlt
+  image_model: fal-ai/nano-banana-pro               # Bild-Postings ohne Gesicht (ca. 0,15 $ je Bild)
+  character_image_model: fal-ai/nano-banana-pro/edit  # Bild-Postings MIT Steffis Gesicht (ca. 0,15 $ je Bild)
+  image_resolution: "2K"
+  provider: pexels                 # Video-Szenen ohne Gesicht: pexels = kostenlose Stock-Clips (Standard) · fal = KI-Clips, bezahlt
   fal_model: fal-ai/kling-video/v2.5-turbo/pro/text-to-video
   fal_seconds: 5
   fal_extra: {cfg_scale: 0.5}

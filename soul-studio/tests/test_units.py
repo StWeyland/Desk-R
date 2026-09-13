@@ -9,8 +9,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from soul_studio.brief import Block, Brief, Slide, format_from_notion, json_schema, normalize   # noqa: E402
 from soul_studio.captions import build_ass, _chunks                                      # noqa: E402
 from soul_studio.carousel import render_carousel                                          # noqa: E402
+from PIL import Image                                                                       # noqa: E402
 from soul_studio.config import Settings, load_settings                                     # noqa: E402
-from soul_studio.images import end_card, statement_image                                  # noqa: E402
+from soul_studio.images import editorial_card, end_card, statement_image                   # noqa: E402
 from soul_studio.sources import html_to_text, post_from_text                              # noqa: E402
 from soul_studio.voice import Word, _words_from_alignment, evenly_timed_words              # noqa: E402
 
@@ -97,6 +98,20 @@ def test_carousel_and_images_render(tmp_path):
     img = statement_image(s, "Der Posteingang entscheidet nicht über deinen Tag", "Wer bestimmt die Reihenfolge?", tmp_path / "b.jpg")
     assert img.exists()
     assert end_card(s, tmp_path / "e.png").exists()
+
+
+def test_editorial_card_fits_long_and_short_content(tmp_path):
+    s = Settings()
+    scene = tmp_path / "scene.jpg"
+    Image.new("RGB", (1200, 1500), (200, 150, 120)).save(scene)
+    long_out = editorial_card(
+        s, scene, "KI erledigt die Aufgabe. Die Verantwortung bleibt bei dir.",
+        "Eine Aufgabe kann KI übernehmen. Verantwortung beginnt dort, wo ein Ergebnis verstanden werden muss.\n"
+        "Welche Aufgabe hast du zuletzt an KI abgegeben, bei der die eigentliche Arbeit erst danach begann?",
+        tmp_path / "long.jpg")
+    short_out = editorial_card(s, scene, "Kurz.", "Auch kurz.", tmp_path / "short.jpg")
+    assert long_out.exists() and short_out.exists()
+    assert Image.open(long_out).size == (1080, 1350)
 
 
 def test_mixed_mode_forces_talking_hook_and_ending():

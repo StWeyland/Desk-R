@@ -38,9 +38,11 @@ class Brief(BaseModel):
     hook: str = Field(description="Der erste Satz. Muss in zwei Sekunden neugierig machen.")
     blocks: list[Block] = Field(default_factory=list, description="Nur bei video: 4–7 Blöcke")
     slides: list[Slide] = Field(default_factory=list, description="Nur bei carousel: 7 Slides (cover, 5x content, cta)")
-    image_headline: str = Field(default="", description="Bei image/story: Headline, max. 10 Wörter")
-    image_subline: str = Field(default="", description="Bei image/story: eine Zeile darunter, optional")
-    image_query: str = Field(default="", description="Bei image/story: englische Suchwörter für ein Hintergrundfoto, leer = reine Farbfläche")
+    image_headline: str = Field(default="", description="Bei image/story: die Kernaussage, max. 12 Wörter, darf aus 1–2 kurzen Sätzen bestehen")
+    image_body: str = Field(default="", description="Bei image/story: 1–2 kurze erklärende Sätze plus optional eine Abschlussfrage, insgesamt max. 35 Wörter")
+    image_mode: Literal["editorial", "character"] = Field(default="editorial", description="editorial = konzeptionelle KI-Illustration ohne Gesicht; character = Szene MIT Steffis Gesicht")
+    image_scene_prompt: str = Field(default="", description="Englischer Prompt für die Bild-Illustration/Szene (Creative-Director-Stil, siehe Systemprompt)")
+    image_query: str = Field(default="", description="Nur als Ersatz ohne fal-Zugang: englische Suchwörter für ein Pexels-Hintergrundfoto")
     caption: str = Field(description="Beitragstext im Stil von Steffi, kurze Zeilen")
     hashtags: list[str] = Field(default_factory=list, description="3–6 Hashtags ohne #")
     platforms: list[str] = Field(default_factory=list, description="linkedin, instagram, tiktok")
@@ -73,7 +75,8 @@ def system_prompt(settings: Settings) -> str:
     v = settings.video
     return (text.replace("{{MIN_BLOCKS}}", str(v.min_blocks)).replace("{{MAX_BLOCKS}}", str(v.max_blocks))
             .replace("{{MAX_WORDS}}", str(v.max_words_per_block)).replace("{{TARGET_SECONDS}}", str(v.target_seconds))
-            .replace("{{SLIDES}}", str(settings.carousel.slides)).replace("{{MODE}}", v.mode))
+            .replace("{{SLIDES}}", str(settings.carousel.slides)).replace("{{MODE}}", v.mode)
+            .replace("{{CHAR_LOOK}}", settings.character.look))
 
 
 def json_schema() -> dict:
