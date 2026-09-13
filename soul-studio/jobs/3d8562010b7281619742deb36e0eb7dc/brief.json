@@ -1,0 +1,18 @@
+{
+  "format": "carousel",
+  "title": "Teil 1 – Copilot Chat vs. Cowork",
+  "hook": "Ein Werkzeug bedienen oder eine Aufgabe abgeben?",
+  "slides": [
+    {"index": 1, "kind": "cover", "headline": "Ein Werkzeug bedienen oder eine Aufgabe abgeben?", "body": "Copilot Chat vs. Cowork – so richtest du es ein"},
+    {"index": 2, "kind": "content", "headline": "Eine Frage stellen ist nicht dasselbe wie eine Aufgabe abgeben", "body": "Copilot Chat beantwortet, was du fragst. Du liest die Antwort und machst weiter wie immer."},
+    {"index": 3, "kind": "content", "headline": "Schritt 1: Ein ganzes Ergebnis beschreiben", "body": "Nicht „Fasse diese Mail zusammen“, sondern „Bereite die Wochenübersicht für das Meeting vor“."},
+    {"index": 4, "kind": "content", "headline": "Schritt 2: Cowork plant die Schritte selbst", "body": "Du beschreibst den Ablauf einmal. Cowork zerlegt ihn in Teilschritte und geht sie durch."},
+    {"index": 5, "kind": "content", "headline": "Schritt 3: Rückfragen zulassen", "body": "Bevor wirklich etwas hinausgeht, fragt Cowork nach. Du bestätigst, statt jeden Schritt selbst zu gehen."},
+    {"index": 6, "kind": "content", "headline": "Was sich dadurch verändert", "body": "Du bist nicht mehr die, die jeden Zwischenschritt erledigt. Du bist die, die das Ergebnis freigibt."},
+    {"index": 7, "kind": "cta", "headline": "Welche Aufgabe würdest du als Erstes abgeben?", "body": "Schreib es in die Kommentare. Ich lese mit."}
+  ],
+  "caption": "Zwischen einer Frage und einer Aufgabe liegt ein Unterschied, der sich in einem Satz entscheidet.\n\nManchmal sitzt du vor etwas und denkst: Das müsste eigentlich nicht ich selbst zusammentragen. Genau an diesem Gedanken setzt Cowork an. Du beschreibst nicht eine einzelne Frage, sondern ein fertiges Ergebnis — und gibst den Weg dorthin ab.\n\nWie du das in der Praxis einrichtest, zeige ich dir Schritt für Schritt im Carousel.",
+  "hashtags": ["assistenz", "cowork", "deskrevolution", "kiimalltag"],
+  "platforms": ["linkedin"],
+  "reasoning_summary": "Anleitung + Carousel laut Titel, 7 Slides, Situation -> Schritte -> CTA."
+}
