@@ -86,6 +86,69 @@ def _generate_fal(prompt: str, out: Path, settings: Settings, aspect_ratio: str)
         raise NeedsManualGeneration(prompt, f"fal.ai fehlgeschlagen: {exc}") from exc
 
 
+def _edit_openai(prompt: str, photos: list[Path], out: Path, aspect_ratio: str) -> Path:
+    """Bild-Bearbeitung mit Referenzfoto(s) – für Szenen MIT Steffis Gesicht (OpenAI images.edit)."""
+    key = os.environ.get("OPENAI_API_KEY", "")
+    if not key:
+        raise NeedsManualGeneration(prompt, "OPENAI_API_KEY fehlt")
+    files = [("image[]", (p.name, p.read_bytes(), "image/jpeg")) for p in photos[:4]]
+    data = {"model": "gpt-image-1", "prompt": prompt, "size": _openai_size(aspect_ratio), "quality": "high", "n": "1"}
+    try:
+        with httpx.Client(timeout=180) as c:
+            r = c.post("https://api.openai.com/v1/images/edits", headers={"Authorization": f"Bearer {key}"},
+                      data=data, files=files)
+    except httpx.HTTPError as exc:
+        raise NeedsManualGeneration(prompt, f"OpenAI nicht erreichbar: {exc}") from exc
+    if r.status_code >= 400:
+        raise NeedsManualGeneration(prompt, f"OpenAI-Fehler {r.status_code}: {r.text[:300]}")
+    result = r.json()["data"][0]
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if "b64_json" in result:
+        import base64
+        out.write_bytes(base64.b64decode(result["b64_json"]))
+    else:
+        with httpx.stream("GET", result["url"], timeout=120, follow_redirects=True) as resp:
+            resp.raise_for_status()
+            out.write_bytes(b"".join(resp.iter_bytes()))
+    return out
+
+
+def _edit_fal(prompt: str, photos: list[Path], out: Path, settings: Settings, aspect_ratio: str) -> Path:
+    if not os.environ.get("FAL_KEY"):
+        raise NeedsManualGeneration(prompt, "FAL_KEY fehlt")
+    try:
+        from .fal import data_uri, generate_image
+        urls = [data_uri(p) for p in photos]
+        return generate_image(prompt, out, settings.footage.character_image_model, aspect_ratio=aspect_ratio,
+                              image_urls=urls, extra={"resolution": settings.footage.image_resolution})
+    except NeedsManualGeneration:
+        raise
+    except Exception as exc:
+        raise NeedsManualGeneration(prompt, f"fal.ai fehlgeschlagen: {exc}") from exc
+
+
+def generate_character_scene(settings: Settings, photos: list[Path], scene_prompt: str, out: Path,
+                             aspect_ratio: str = "4:5") -> PosterResult:
+    """Erzeugt eine NEUE Szene mit Steffis Gesicht, ausgehend von ihren Referenzfotos.
+    Die Fotos dienen nur als Referenz für die Wiedererkennbarkeit – nie 1:1 übernommen,
+    jedes Mal eine frisch komponierte Szene passend zum Beitrag."""
+    prompt = (f"{scene_prompt}. Subject: {settings.character.look}. Photorealistic, natural, editorial photography, "
+             f"consistent identity with the reference photo(s), no text, no logos, no watermark.")
+    if not photos:
+        raise NeedsManualGeneration(prompt, "Kein Referenzfoto vorhanden (Notion-Seite „Soul Studio – Dein Foto“ leer)")
+    provider = settings.footage.image_provider
+    errors = []
+    for name in [provider] + [p for p in ("openai", "fal") if p != provider]:
+        try:
+            if name == "openai":
+                return PosterResult(_edit_openai(prompt, photos, out, aspect_ratio), prompt)
+            if name == "fal":
+                return PosterResult(_edit_fal(prompt, photos, out, settings, aspect_ratio), prompt)
+        except NeedsManualGeneration as exc:
+            errors.append(f"{name}: {exc.reason}")
+    raise NeedsManualGeneration(prompt, "; ".join(errors))
+
+
 def generate_poster(settings: Settings, briefing: str, out: Path, aspect_ratio: str = "9:16") -> PosterResult:
     """Versucht das Plakat automatisch zu erzeugen. Wenn kein Weg funktioniert,
     wird NeedsManualGeneration ausgelöst — der Aufrufer legt dann den Prompt als Text ab."""

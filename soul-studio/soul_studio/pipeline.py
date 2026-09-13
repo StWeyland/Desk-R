@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import math
-import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -141,47 +140,18 @@ class Producer:
         return BlockMedia(block.index, clip, take.audio, take.seconds, take.words, block.on_screen_text)
 
     # ------------------------------------------------------------ Formate
-    def _scene_for_image(self, brief: Brief, out_dir: Path) -> Path | None:
-        """Erzeugt die Illustration/Szene über fal.ai (editorial oder mit Steffis Gesicht).
-        Ohne FAL_KEY oder im Testlauf: Pexels-Foto (falls image_query gesetzt) oder None (Farbfläche)."""
-        scene = out_dir / "scene.png"
-        if scene.exists():
-            return scene
-        if self.mock:
-            return placeholder_frame(self.settings, scene, "Szene")
-        f = self.settings.footage
-        if os.environ.get("FAL_KEY"):
-            from .fal import data_uri, generate_image
-            try:
-                if brief.image_mode == "character":
-                    photos = self._character_photos(out_dir)
-                    urls = [data_uri(p) for p in photos]
-                    prompt = f"{brief.image_scene_prompt}. Subject: {self.settings.character.look}. No text, no logos."
-                    return generate_image(prompt, scene, f.character_image_model, aspect_ratio="4:5",
-                                          image_urls=urls, extra={"resolution": f.image_resolution})
-                prompt = f"{brief.image_scene_prompt}. No text, no logos, no watermark."
-                return generate_image(prompt, scene, f.image_model, aspect_ratio="4:5",
-                                      extra={"resolution": f.image_resolution})
-            except Exception as exc:
-                self.log(f"  fal-Bild fehlgeschlagen ({exc}); weiche aus.")
-        if brief.image_query:
-            try:
-                from .pexels import search_photo
-                return search_photo(brief.image_query, scene, portrait=True)
-            except Exception as exc:
-                self.log(f"  Kein Foto ({exc}); nutze Farbfläche.")
-        return None
-
     def _image_post(self, brief: Brief, out_dir: Path, out_file: Path, size: tuple[int, int]
                     ) -> tuple[Path | None, Path | None]:
         """Gibt (Bilddatei, Prompt-Textdatei) zurück – genau eine der beiden ist gesetzt.
         editorial: Steffis Creative-Director-Plakat (per API, sonst Prompt als Text zum Einfügen in ChatGPT).
-        character: Foto-Szene mit Steffis Gesicht, danach Headline/Fließtext per Vorlage darüber."""
+        character: eine NEUE Szene mit Steffis Gesicht, aus ihren Referenzfotos komponiert (nie 1:1 übernommen),
+        danach Headline/Fließtext per Vorlage darüber (per API, sonst Prompt + Hinweis auf das Referenzfoto)."""
+        if self.mock:
+            return placeholder_frame(self.settings, out_file, "Vorschau"), None
+        aspect = "1:1" if size[0] == size[1] else "9:16"
+        from .imagegen import NeedsManualGeneration, generate_character_scene, generate_poster
+
         if brief.image_mode == "editorial" and brief.poster_briefing:
-            if self.mock:
-                return placeholder_frame(self.settings, out_file, "Plakat"), None
-            from .imagegen import NeedsManualGeneration, generate_poster
-            aspect = "1:1" if size[0] == size[1] else "9:16"
             try:
                 result = generate_poster(self.settings, brief.poster_briefing, out_file, aspect)
                 return result.path, None
@@ -190,12 +160,33 @@ class Producer:
                 prompt_file = out_dir / "bild_prompt.txt"
                 prompt_file.write_text(exc.prompt, encoding="utf-8")
                 return None, prompt_file
-        scene = self._scene_for_image(brief, out_dir)
+
+        if brief.image_mode == "character":
+            scene_file = out_dir / "scene.png"
+            try:
+                photos = self._character_photos(out_dir)
+                result = generate_character_scene(self.settings, photos, brief.image_scene_prompt, scene_file, "4:5")
+                return editorial_card(self.settings, result.path, brief.image_headline or brief.hook,
+                                      brief.image_body, out_file, size), None
+            except (NeedsManualGeneration, RuntimeError) as raw_exc:
+                exc = raw_exc if isinstance(raw_exc, NeedsManualGeneration) else NeedsManualGeneration(
+                    f"{brief.image_scene_prompt}. Subject: {self.settings.character.look}.", str(raw_exc))
+                self.log(f"  Kein automatischer Bildzugang ({exc.reason}). Prompt wird als Text abgelegt.")
+                prompt_file = out_dir / "bild_prompt.txt"
+                photos_note = "\n\n---\nWICHTIG: Dieses Bild braucht dein Gesicht. Lade in ChatGPT eines deiner " \
+                              "Referenzfotos aus der Notion-Seite „Soul Studio – Dein Foto“ zusätzlich zum Text hoch."
+                prompt_file.write_text(exc.prompt + photos_note, encoding="utf-8")
+                return None, prompt_file
+
         headline = brief.image_headline or brief.hook
-        body = brief.image_body
-        if scene is not None:
-            return editorial_card(self.settings, scene, headline, body, out_file, size), None
-        return statement_image(self.settings, headline, body, out_file, size, None), None
+        if brief.image_query:
+            try:
+                from .pexels import search_photo
+                scene = search_photo(brief.image_query, out_dir / "scene.png", portrait=True)
+                return editorial_card(self.settings, scene, headline, brief.image_body, out_file, size), None
+            except Exception as exc:
+                self.log(f"  Kein Foto ({exc}); nutze Farbfläche.")
+        return statement_image(self.settings, headline, brief.image_body, out_file, size, None), None
 
     def render(self, post: Post, brief: Brief, out_dir: Path, parallel: int = 3) -> Result:
         s = self.settings

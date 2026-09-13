@@ -17,7 +17,7 @@ Was pro Format entsteht:
 |---|---|
 | Video, Reel | Hochkant-Video, 30 bis 50 Sekunden: du sprichst in die Kamera (aus deinem Foto und deiner Stimme erzeugt), dazwischen Szenen aus dem Assistenzalltag mit deiner Stimme aus dem Off, große Untertitel, Abspann |
 | Carousel | 7 Slides im Marken-Look als PNG und als PDF für LinkedIn |
-| Bild | Bild-Postkarte 4:5: zweifarbige Headline, KI-Illustration passend zur Aussage (oder eine Szene mit dir, bei persönlichen Beiträgen), kurzer Fließtext |
+| Bild | entweder ein museumsreifes Konzept-Plakat (abstrakte/institutionelle Aussagen) oder eine neu komponierte Szene mit dir (persönliche Beiträge, Wachstumsreihe) — deine Referenzfotos werden dabei nie unverändert übernommen |
 | Story | dieselbe Postkarte im Hochformat 9:16 |
 | Post, Poll | nur der Beitragstext |
 
@@ -27,7 +27,8 @@ Carousel, Bild und Story funktionieren sofort. Für **Videos mit deinem Gesicht 
 
 | Zugang | Wofür | Kosten |
 |---|---|---|
-| **fal.ai** (fal.ai → Keys) | Videos: Foto + Stimme → sprechendes Video (OmniHuman 1.5). Bilder: die Illustration bzw. Szene für jedes Bild-Posting (Nano Banana Pro) | Bezahlung pro Einheit, kein Abo. Video ca. 0,16 $/Sekunde (40-Sek.-Video etwa 3–6 $). Bild ca. 0,15 $ pro Bild. |
+| **OpenAI** (platform.openai.com → API Keys) | Bild-Postings: das Konzept-Plakat (`gpt-image-1`) und, bei persönlichen Beiträgen, eine neue Szene mit dir (Bildbearbeitung mit deinem Referenzfoto) | Bezahlung pro Bild, kein Abo. Ca. 0,17–0,20 $ pro Bild. |
+| **fal.ai** (fal.ai → Keys, optional) | dieselben zwei Bildarten über Nano Banana Pro, außerdem Videos: Foto + Stimme → sprechendes Video (OmniHuman 1.5) | Bezahlung pro Einheit, kein Abo. Bild ca. 0,15 $, Video ca. 0,16 $/Sekunde. |
 | **ElevenLabs** (elevenlabs.io): Stimme klonen, dann Profil → API Keys | deine Stimme | gratis bis ca. 10 Minuten Sprache im Monat, sonst ab ca. 5 € |
 | **Pexels** (pexels.com/api) | Stock-Clips für die Szenen ohne Gesicht, Fotos für Bild-Postings | kostenlos |
 | **Dein Foto** | Notion-Seite „Soul Studio – Dein Foto“: ein bis drei Fotos hochladen, Hinweise stehen auf der Seite | kostenlos |

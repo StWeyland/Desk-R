@@ -100,6 +100,8 @@ Steffi selbst ist im Bild zu sehen, in einer Szene, die zur Situation im Beitrag
 
 Nutze `character` nur bei eindeutig persönlichen Beiträgen (Ich-Perspektive, eigene Erfahrung, Wachstumsreihe). Bei allgemeinen oder institutionellen Aussagen bleibt es bei `editorial`.
 
+Wichtig: Steffis Referenzfotos werden dabei nie unverändert verwendet. Sie dienen nur dazu, ihr Gesicht wiedererkennbar zu machen. Jedes Bild ist eine komplett neu komponierte Szene, passend zum jeweiligen Beitrag.
+
 ## Regeln für Carousel-Slides
 
 - Headlines kurz (max. 8 Wörter), aktiv, ohne Punkt am Ende. Jede Slide ein Gedanke.
