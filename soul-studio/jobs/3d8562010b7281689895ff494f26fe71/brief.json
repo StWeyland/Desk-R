@@ -1,6 +1,8 @@
-{"format":"image","title":"Hook-Test A",
- "hook":"Deine Erfahrung lässt sich nicht kopieren",
- "image_headline":"Deine Erfahrung lässt sich nicht kopieren",
- "image_subline":"Kontext, Beziehungen, ein Gespür, das über Jahre gewachsen ist.",
- "image_query":"",
- "caption":"placeholder","hashtags":["assistenz"],"platforms":["linkedin"]}
+{
+  "format": "none",
+  "title": "Hook-Test A: Deine Erfahrung lässt sich nicht kopieren",
+  "hook": "Der Kalender ist heute schon zweimal umgeplant.",
+  "caption": "Der Kalender ist heute schon zweimal umgeplant. Die Mail-Flut hat noch nicht mal richtig begonnen, da liegt schon die Frage auf dem Tisch, ob ein Meeting per Zoom oder doch besser vor Ort stattfinden soll.\n\nGenau in solchen Momenten hörst du in letzter Zeit öfter den Satz: \"Das macht bald die KI für dich.\"\n\nWas dabei oft übergangen wird: Niemand hat einem System beigebracht, welches der drei möglichen Meetings wirklich wichtig ist. Das entscheidest du. Anhand von Kontext, Beziehungen und einem Gespür, das über Jahre gewachsen ist.\n\nDie Zukunft deiner Rolle liegt nicht darin, weniger gebraucht zu werden. Sie liegt darin, genau diese Einschätzung sichtbarer zu machen und ein digitales System so anzuleiten, dass es dir die Routineentscheidungen abnimmt, nicht die wichtigen.\n\nWas wäre der erste Schritt, wenn du diese Woche eine einzige wiederkehrende Entscheidung an ein digitales System übergeben würdest und dir selbst die Zeit für die schwierigeren Entscheidungen zurückholst?",
+  "hashtags": ["assistenz", "zukunftderarbeit", "ki", "executiveassistant", "deskrevolution"],
+  "platforms": ["linkedin"]
+}
