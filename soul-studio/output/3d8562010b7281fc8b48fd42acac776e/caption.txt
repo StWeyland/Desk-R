@@ -1,23 +1,3 @@
-Eine E-Mail ist in zehn Sekunden geschrieben.
-Ein Foliensatz steht in zwei Minuten.
-Eine Zusammenfassung liegt vor, bevor der erste Kaffee ausgetrunken ist.
+placeholder
 
-KI erledigt Aufgaben in einem Tempo, an das wir uns gerade erst gewöhnen.
-
-Doch Tempo beantwortet eine andere Frage nicht.
-
-Wer steht dafür gerade, dass die Mail den richtigen Ton trifft. Dass die Zahl im Foliensatz stimmt. Dass in der Zusammenfassung nichts Entscheidendes fehlt.
-
-Diese Frage stellt sich keine KI von selbst. Beantworten kann sie sie auch nicht.
-
-Genau hier verläuft gerade die eigentliche Grenze in der Assistenzrolle: zwischen Aufgabe und Verantwortung.
-
-Eine Aufgabe lässt sich erledigen. Von dir, von einem System, von wem auch immer gerade Zeit hat.
-
-Verantwortung bleibt dort, wo sie immer war. Bei der Person, die ein Ergebnis versteht, einordnet und dafür geradesteht.
-
-Genau dieser Unterschied entscheidet in den kommenden Monaten darüber, wie die Assistenzrolle wahrgenommen wird.
-
-Welche Aufgabe hast du zuletzt an KI abgegeben, bei der die eigentliche Arbeit erst danach begann?
-
-#assistenz #verantwortung #ki #arbeitsalltag #deskrevolution
+#assistenz

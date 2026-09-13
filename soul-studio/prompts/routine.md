@@ -35,8 +35,15 @@ Für jeden Eintrag schreibst du selbst das Briefing als JSON-Datei `jobs/<page-i
 | Carousel | `carousel` |
 | Bild | `image` |
 | Story | `story` |
-| Post, Poll | `none` |
+| Post | `image` (Standard — siehe unten) |
+| Poll | `none` |
 | leer | du entscheidest |
+
+**Wichtig zu „Post“:** Ein LinkedIn/Instagram-„Post“ bekommt standardmäßig ein Bild, kein reines `none`. Steffi will zu praktisch jedem Beitrag ein passendes Bild — das war der ganze Grund, Soul Studio zu bauen. Setze `format: none` nur, wenn der Beitrag erkennbar eine reine Diskussionsfrage ohne visuellen Kern ist (selten). Im Zweifel: `image`.
+
+Bei `format: image` entscheidest du zusätzlich `image_mode` (siehe `brief_system.md`, Abschnitt „Regeln für Bild-Postings“):
+- `editorial` (häufiger Fall): du füllst `poster_briefing` vollständig nach Steffis Creative-Director-Vorlage aus — das ist die eigentliche Arbeit, nicht optional.
+- `character`: bei eindeutig persönlichen Beiträgen (Ich-Perspektive, Wachstumsreihe) füllst du stattdessen `image_headline`, `image_body`, `image_scene_prompt`.
 
 `platforms` übernimmst du aus `Plattform` (kleingeschrieben: linkedin, instagram, tiktok).
 
@@ -51,6 +58,12 @@ python -m soul_studio render jobs/<page-id>/brief.json --job jobs/<page-id>/job.
 Das Ergebnis steht in `output/<page-id>/result.json` (Feld `media` = Dateipfade, `caption` = Beitragstext). Bei `video`: `final.mp4`. Bei `carousel`: `carousel.pdf` plus `slide_01.png` … Bei `image`/`story`: `final.jpg` bzw. `final_story.jpg`. Bei `none`: nur der Beitragstext.
 
 Schlägt ein Video fehl (z.B. Schlüssel fehlt), produziere stattdessen ein `image` mit dem Hook als Headline und vermerke das in der `Produktions-Notiz`. Kosten im Blick: jeder `talking`-Block kostet bei fal.ai etwa 0,16 $ je Sekunde; ein 40-Sekunden-Video im Modus `mixed` liegt bei etwa 3 bis 5 $.
+
+**Kein Bildzugang (wichtiger Sonderfall):** Prüfe `result.json`. Steht dort `needs_manual_prompt` statt einer Bilddatei in `media`, gibt es keinen erreichbaren OPENAI_API_KEY/FAL_KEY — der fertige Prompt liegt als `bild_prompt.txt` bereit. Das ist kein Fehler, sondern der eingebaute Rückfallweg: Steffi fügt den Text selbst in ChatGPT ein. In diesem Fall:
+- Committe/hänge NUR die `bild_prompt.txt` an (Schritt 4/5), kein Platzhalterbild.
+- `Produktions-Notiz`: „Bild-Prompt erstellt, kein automatischer Bildzugang. Bitte in ChatGPT einfügen, Ergebnis hier hochladen, dann Status auf „Produzieren“ zurücksetzen.“
+- `Status` bleibt **„Entwurf“** — nicht „Zur Freigabe“.
+- **Überspringe Schritt 5b (Metricool) für diesen Eintrag komplett.** Ein Beitrag, der ein Bild bekommen soll, darf nicht ohne Bild im Planer landen, auch nicht als Entwurf.
 
 ## 4. Dateien öffentlich erreichbar machen (über das Repository)
 
@@ -71,7 +84,7 @@ Für jede Mediendatei `notion-create-attachment` mit `source_url` = Raw-Link und
 Dann `notion-update-page` mit:
 - `Entwurfstext` = der fertige Beitragstext aus `result.json`, nur wenn `Entwurfstext` vorher leer war; sonst unverändert lassen
 - `Produktions-Notiz` = eine Zeile: Format, Anzahl Dateien, Datum, Hinweise
-- `Status` = „Zur Freigabe“
+- `Status` = „Zur Freigabe“ (Ausnahme: kein Bildzugang, siehe „Kein Bildzugang“ oben — dann „Entwurf“)
 
 Hänge den Beitragstext zusätzlich als Seiteninhalt an (`insert_content`, Überschrift „Produziert am <Datum>“, darunter der Beitragstext und die Bilder als Markdown-Links auf die Raw-Links).
 

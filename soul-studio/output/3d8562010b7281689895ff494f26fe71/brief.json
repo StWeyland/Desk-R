@@ -1,22 +1,18 @@
 {
-  "format": "none",
+  "format": "image",
   "title": "Hook-Test A: Deine Erfahrung lässt sich nicht kopieren",
-  "hook": "Der Kalender ist heute schon zweimal umgeplant.",
+  "hook": "Deine Erfahrung lässt sich nicht kopieren",
   "blocks": [],
   "slides": [],
   "image_mode": "editorial",
-  "poster_briefing": "",
+  "poster_briefing": "**Thema:**\nUnkopierbare Erfahrung\n\n**Kontext:**\nAssistenzen hören zunehmend, KI werde Entscheidungen bald für sie treffen. Der Beitrag zeigt, dass Urteilsvermögen aus Kontext und Beziehungen entsteht, die über Jahre gewachsen sind – nicht aus Daten, die sich kopieren lassen.\n\n**Kernaussage:**\nDeine Erfahrung lässt sich nicht kopieren.\n\n**Visuelle Metapher:**\nEin Schlüssel, dessen Zahnung nicht gefräst, sondern aus konzentrischen Jahresringen gewachsen ist – wie ein Baumquerschnitt. Jeder Ring eine Erfahrung, die sich nicht nachträglich einfügen oder maschinell nachschneiden lässt.\n\n**Hauptobjekt (Hero Object):**\nEin einzelner metallener Schlüssel, dessen Bart aus sichtbaren, unregelmäßigen Jahresringen besteht.\n\n**Geschichte in einem Bild:**\nDer Schlüssel liegt allein und dominant im Bild, sein Bart zeigt die Ringstruktur wie ein Baumstamm im Querschnitt – organisch, unregelmäßig, einzigartig. Im unscharfen Hintergrund, klein und distanziert, eine industrielle Schlüsselkopiermaschine, die ins Leere greift: Ihre glatte, gefräste Klinge hat keine Ringe zu kopieren.\n\n**Zielgruppe:**\nAssistenzen, Executive Assistants und Office Professionals, die ihre Rolle im KI-Zeitalter aktiv gestalten wollen – souverän, neugierig, keine Anfängerinnen.\n\n**Gewünschte Emotion:**\nStille Selbstgewissheit\n\n**Pflichttext:**\n* \"Deine Erfahrung lässt sich nicht kopieren.\"\n* \"Kontext, Beziehungen, ein Gespür – über Jahre gewachsen, nicht codiert.\"\n* \"Welche Entscheidung triffst du gerade aus Erfahrung, die dir kein System abnehmen kann?\"\n\n**Farbrichtung:**\nDeep Salmon für den Schlüssel selbst, damit er wertvoll und warm wirkt; Creme als weite, stille Fläche, die ihn vereinzelt und bedeutsam erscheinen lässt.\n\n**Vorrangige Farbwelt:**\nDie Palette ist eine bevorzugte visuelle DNA, keine Pflicht, alle vier Farben gleichzeitig einzusetzen. Nutze wenige Farben mit klarer Funktion und Hierarchie. Bevorzuge #FFF2EB für helle Grundflächen, #983D15 für starke Kontraste und #FCA27A/#FEC7AF für gezielte Akzente und Abstufungen. Schwarz oder dunkles Graphit darf für Typografie und notwendigen Kontrast ergänzt werden. Keine zusätzlichen dekorativen Farben.\n\n**Design-Referenzen:**\nSchweizer Plakatdesign, redaktionelle Editorial-Illustration, museale Ausstellungsgrafik. Keine Fotografie, kein 3D-Rendering-Kitsch.",
   "image_headline": "",
   "image_body": "",
   "image_scene_prompt": "",
   "image_query": "",
-  "caption": "Der Kalender ist heute schon zweimal umgeplant. Die Mail-Flut hat noch nicht mal richtig begonnen, da liegt schon die Frage auf dem Tisch, ob ein Meeting per Zoom oder doch besser vor Ort stattfinden soll.\n\nGenau in solchen Momenten hörst du in letzter Zeit öfter den Satz: \"Das macht bald die KI für dich.\"\n\nWas dabei oft übergangen wird: Niemand hat einem System beigebracht, welches der drei möglichen Meetings wirklich wichtig ist. Das entscheidest du. Anhand von Kontext, Beziehungen und einem Gespür, das über Jahre gewachsen ist.\n\nDie Zukunft deiner Rolle liegt nicht darin, weniger gebraucht zu werden. Sie liegt darin, genau diese Einschätzung sichtbarer zu machen und ein digitales System so anzuleiten, dass es dir die Routineentscheidungen abnimmt, nicht die wichtigen.\n\nWas wäre der erste Schritt, wenn du diese Woche eine einzige wiederkehrende Entscheidung an ein digitales System übergeben würdest und dir selbst die Zeit für die schwierigeren Entscheidungen zurückholst?",
+  "caption": "placeholder",
   "hashtags": [
-    "assistenz",
-    "zukunftderarbeit",
-    "ki",
-    "executiveassistant",
-    "deskrevolution"
+    "assistenz"
   ],
   "platforms": [
     "linkedin"
